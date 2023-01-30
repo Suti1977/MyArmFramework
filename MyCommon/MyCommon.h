@@ -7,8 +7,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include "cmsis_gcc.h"
+#include <stdbool.h>
 #include "MyStatus.h"
-#include "MyHelpesr.h"
+#include "MyHelpers.h"
 #include "MyAtomic.h"
 
 #ifdef USE_FREERTOS
