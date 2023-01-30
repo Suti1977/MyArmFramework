@@ -17,6 +17,9 @@
 #include "MyRTOS.h"
 #endif
 
+#ifndef ASSERT(e)
+#define ASSERT(e) assert(e)
+#endif
 //------------------------------------------------------------------------------
 
 #endif // MY_COMMON_H_
