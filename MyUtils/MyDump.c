@@ -8,7 +8,7 @@
 
 //------------------------------------------------------------------------------
 //memoriatartalom kilistazasa a konzolra
-void MyDump_memory(void* src, unsigned int length)
+void MyDump_memory(const void* src, unsigned int length)
 {
     unsigned char   cnt=0;  //16 bejegyzesenkent kiirja a cimet
     unsigned char*  hexPtr;
@@ -59,7 +59,7 @@ void MyDump_memory(void* src, unsigned int length)
 }
 //------------------------------------------------------------------------------
 //memoriatartalom kilistazasa a konzolra
-void MyDump_memorySpec(void* src,
+void MyDump_memorySpec(const void* src,
                         unsigned int length,
                         unsigned int firstPrintedAddress)
 {

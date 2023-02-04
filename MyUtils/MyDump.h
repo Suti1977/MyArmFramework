@@ -9,9 +9,9 @@
 #include "MyCommon.h"
 
 //memoriatartalom kilistazasa a konzolra
-void MyDump_memory(void* src, unsigned int length);
+void MyDump_memory(const void* src, unsigned int length);
 //memoriatartalom kilistazasa a konzolra, de ugy, hogy a cimet mi specifikaljuk
-void MyDump_memorySpec(void* src,
+void MyDump_memorySpec(const void* src,
                        unsigned int length,
                        unsigned int firstPrintedAddress);
 //------------------------------------------------------------------------------

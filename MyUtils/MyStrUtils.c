@@ -86,9 +86,9 @@ int MyStrUtils_hexStringToBin(const char* srcStr,
 //hexa eseten vagy "0x"-el kezdodik a szam, vagy a vegen h-van (azt is
 //elfogadja, ha mind a ketto meg van adva) "h" utan viszont nem lehet semmi.
 //Negativot nem kezel!!!!
-int MyStrUtils_strToValueo_value(char* srcStr,
-                              uint32_t srcStrLength,
-                              uint32_t *destValue)
+int MyStrUtils_strToValue(char* srcStr,
+                          uint32_t srcStrLength,
+                          uint32_t *destValue)
 {
     uint64_t temp;
     char *p;
