@@ -263,7 +263,7 @@ void MySwTimer_start(MySwTimer_t* timer,
 
         //Managerben idozites ujraszamitasa...
         if (timer->nextTime < manager->nextExecutionTime)
-        {   //E timer korababn kell, hogy kiszolgaalsra keruljon, mint amit a
+        {   //E timer korababn kell, hogy kiszolgalasra keruljon, mint amit a
             //managerben futtatasi idopontot isemerunk. Ez a timer lesz kiszol-
             //galva eloszor.
             manager->nextExecutionTime=timer->nextTime;
