@@ -15,6 +15,7 @@ void MySeq_start(MySeq_t* mySeq,
     mySeq->nextStep=steps;
     mySeq->timer=timer;
     mySeq->privData=privData;
+    mySeq->run=true;
     MySwTimer_start(timer, 0, 0);
 }
 //------------------------------------------------------------------------------
@@ -22,6 +23,9 @@ void MySeq_start(MySeq_t* mySeq,
 //true-val ter vissza, ha a szekvenciaval vegzett.
 bool MySeq_run(MySeq_t* mySeq)
 {
+    //A szekvencia nincs elinditva. Kilepes.
+    if (mySeq->run==false) return false;
+
     if (MySwTimer_expired(mySeq->timer)==false)
     {   //A timer meg nem jart le. Kilepes.
         return false;
@@ -33,6 +37,9 @@ bool MySeq_run(MySeq_t* mySeq)
     //van meg mit vegrehajtani? (NULL-al kell lezarni a szekvenciat)
     if (func == NULL)
     {   //vege a szekvencianak
+
+        mySeq->run=false;
+        //Kesz jelzes a hivo oldalnak.)
         return true;
     }
 
@@ -48,5 +55,12 @@ bool MySeq_run(MySeq_t* mySeq)
 
     //Meg nincs kesz-->false
     return false;
+}
+//------------------------------------------------------------------------------
+//Szekvencia vegrehajtas felbeszakitasa
+void MySeq_abort(MySeq_t* mySeq)
+{
+    mySeq->run=false;
+    MySwTimer_stop(mySeq->timer);
 }
 //------------------------------------------------------------------------------

@@ -16,6 +16,9 @@ typedef uint32_t MySeqFunc_t(void* priv);
 //Szekvencia vezerles valtozoi
 typedef struct
 {
+    //true, ha fut a szekvencia
+    bool run;
+
     //A soron kovetkezo lepesre mutat
     MySeqFunc_t** nextStep;
 
@@ -35,5 +38,8 @@ void MySeq_start(MySeq_t* mySeq,
 //Szekvencia futtatasa.
 //true-val ter vissza, ha a szekvenciaval vegzett.
 bool MySeq_run(MySeq_t* mySeq);
+
+//Szekvencia vegrehajtas felbeszakitasa
+void MySeq_abort(MySeq_t* mySeq);
 //------------------------------------------------------------------------------
 #endif //MYSEQ_H_
