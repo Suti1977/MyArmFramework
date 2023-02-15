@@ -161,7 +161,7 @@ void MyTaskedResource_setEventFromIsr(resource_t* resource, uint32_t event)
                        event,
                        eSetBits,
                        &higherPriorityTaskWoken);
-    portYIELD_FROM_ISR(higherPriorityTaskWoken)
+    portYIELD_FROM_ISR(higherPriorityTaskWoken);
 }
 
 //------------------------------------------------------------------------------

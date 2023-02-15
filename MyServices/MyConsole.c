@@ -141,7 +141,7 @@ void MyConsole_feedFromIsr(MyConsole_t* console, uint8_t rxByte)
     //Jelezes a taszknak, hogy ebredjen fel, es nezzen ra a FIFO-ra
     vTaskNotifyGiveFromISR(console->taskHandler, &xHigherPriorityTaskWoken);
 
-    portYIELD_FROM_ISR(xHigherPriorityTaskWoken)
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
   #endif
 }
 //------------------------------------------------------------------------------
