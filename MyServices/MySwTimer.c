@@ -90,7 +90,8 @@ status_t MySwTimer_runManager(MySwTimerManager_t* manager, uint64_t time)
 
     //A leheto legnagyobb idore allitjuk a manager kovetkezo futtatasi
     //idopontjat. Ha marad aktiv timer, akkor a legkisebb idot veszi majd fel.
-    manager->nextExecutionTime=~0ull;   //0xffffffffffffffff;
+    //manager->nextExecutionTime=~0ull;   //0xffffffffffffffff;
+    manager->nextExecutionTime=0x0fffffffffffffff;
 
     //ciklus,a mig minden timeren vegigert.
     MySwTimer_t* timer=manager->firstTimer;
@@ -139,10 +140,22 @@ status_t MySwTimer_runManager(MySwTimerManager_t* manager, uint64_t time)
     return kStatus_Success;
 }
 //------------------------------------------------------------------------------
+//Ido aktualizalasa a managerben.
+//A MySwTimer_getWaitTime... elot hivando.
+void MySwTimer_setTime(MySwTimerManager_t* manager, uint64_t time)
+{
+    manager->time=time;
+}
+//------------------------------------------------------------------------------
 //Annak az idonek a lekerdezese, amennyi ido mulva a managert ujra futtatni kell.
 uint64_t MySwTimer_getWaitTime64(MySwTimerManager_t* manager)
 {
-    return manager->nextExecutionTime - manager->time;
+    int64_t t=manager->nextExecutionTime - manager->time;
+    if (t<0)
+    {   //Alulcsordult a timer.
+        t=0;
+    }
+    return t; //manager->nextExecutionTime - manager->time;
 }
 //------------------------------------------------------------------------------
 //Annak az idonek a lekerdezese, amennyi ido mulva a managert ujra futtatni kell.
@@ -195,7 +208,8 @@ void MySwTimer_stop(MySwTimer_t* timer_)
 
     //A leheto legnagyobb idore allitjuk a manager kovetkezo futtatasi
     //idopontjat. Ha marad aktiv timer, akkor a legkisebb idot veszi majd fel.
-    manager->nextExecutionTime=~0ull;   //0xffffffffffffffff;
+    //manager->nextExecutionTime=~0ull;   //0xffffffffffffffff;
+    manager->nextExecutionTime=0x0fffffffffffffff;
 
     //Managerben idozites ujraszamitasa. A legorabbi idopont kikeresese...
     //ciklus, amig minden timeren vegigert....
@@ -242,7 +256,8 @@ void MySwTimer_start(MySwTimer_t* timer,
 
         //A leheto legnagyobb idore allitjuk a manager kovetkezo futtatasi
         //idopontjat. Ha marad aktiv timer, akkor a legkisebb idot veszi fel.
-        manager->nextExecutionTime=~0ull;   //0xffffffffffffffff;
+        //manager->nextExecutionTime=~0ull;   //0xffffffffffffffff;
+        manager->nextExecutionTime=0x0fffffffffffffff;
 
         //ciklus, amig minden timeren vegigert....
         MySwTimer_t* next=manager->firstTimer;

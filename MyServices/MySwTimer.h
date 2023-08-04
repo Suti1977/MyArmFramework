@@ -62,6 +62,10 @@ void MySwTimer_deleteTimer(MySwTimerManager_t* manager, MySwTimer_t* timer);
 //time-ben meg kell adni az aktualis idot
 status_t MySwTimer_runManager(MySwTimerManager_t* manager, uint64_t time);
 
+//Ido aktualizalasa a managerben.
+//A MySwTimer_getWaitTime... elot hivando.
+void MySwTimer_setTime(MySwTimerManager_t* manager, uint64_t time);
+
 //Annak az idonek a lekerdezese, amennyi ido mulva a managert ujra futtatni kell.
 uint64_t MySwTimer_getWaitTime64(MySwTimerManager_t* manager);
 //Annak az idonek a lekerdezese, amennyi ido mulva a managert ujra futtatni kell.
