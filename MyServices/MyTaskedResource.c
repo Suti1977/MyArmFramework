@@ -137,7 +137,7 @@ static void __attribute__((noreturn)) MyTaskedResource_task(void* taskParam)
         control.waitTime=portMAX_DELAY;
         control.done=0;
         control.prohibitStop=0;
-        control.resourceStopRequest=0;
+        control.resourceStopRequest=0;        
         //Alapertelmezesben azt mondjuk, hogy a startFunc() callback meghivasa
         //utan elindult az eroforras. Ezt a jelzest felul lehet biralni a
         //startFunc() callbackben, de akkor a loop-ban futo applikacionak
@@ -151,7 +151,7 @@ static void __attribute__((noreturn)) MyTaskedResource_task(void* taskParam)
         //Az elso futasnal alapertelmezesben nem akad meg az eventekre varasnal,
         //de a start callbackben ez feluldefinialhato.
         control.waitTime=0;
-
+        control.time=MyRTOS_getTick();
         #if MyTASKEDRESOURCE_TRACING
         printf("MyTaskedResource STARTING... (%s)\n", this->cfg.name);
         #endif
