@@ -99,7 +99,11 @@ status_t MySM_run(MySM_t* sm)
         if (sm->newState)
         {   //Van eloirva allapotvaltas. Ellenorizzuk, hogy nem e ugyan az, mint
             //ami fut...
-            if (sm->newState != sm->state)
+
+            //--> Ezt kivettem, mert ha benne volt, akkor nem tudtam az
+            //    adott allaptot ujrainditani.
+
+            //if (sm->newState != sm->state)
             {   //Ez egy uj allapot
 
                 //Ha az elozo allapothoz van kilepesi fuggeveny, akkor azt
