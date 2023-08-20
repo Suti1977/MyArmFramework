@@ -9,7 +9,7 @@
 //   A rovidnel adott idovel hoszabb idopontban  egy jelzes es annak vegen
 //                     __--------____
 //                           !   !
-//   Adott idonel hoszabb aktiv alalpot eseten egy lista alapjan
+//   Adott idonel hoszabb aktiv allapot eseten egy lista alapjan
 //                     __-----------------------------_______
 //                           !                !       !
 //------------------------------------------------------------------------------
