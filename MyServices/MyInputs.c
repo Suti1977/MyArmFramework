@@ -43,8 +43,40 @@ void MyInputs_initManager(MyInputs_manager_t* manager,
                                            &manager->taskBuffer);
     ASSERT(manager->taskHandler);
 
+    manager->pollTime=config->pollTime;
+
     //Bemenetek kezeleset tamogato manager inicializalasa
     MySwTimer_initManager(&manager->timerManager);
+    //Pollozast uzemezo idozito letrehozasa
+    MySwTimer_addTimer(&manager->timerManager, &manager->pollTimer);
+
+}
+//------------------------------------------------------------------------------
+//Bemenet letrehozasa
+void MyInputs_createInput(MyInput_t* input, const MyInput_config_t* config)
+{
+    memset(input, 0, sizeof(MyInput_t));
+    input->cfg=config;
+}
+//------------------------------------------------------------------------------
+//Bemenet hozzaadasa a manager ala
+void MyInputs_addInput(MyInputs_manager_t* manager, MyInput_t* input)
+{
+    if (manager->firstInput==NULL)
+    {   //Meg nincs beregisztralva hasznalo. Ez lesz az elso.
+        manager->firstInput=input;
+    } else
+    {   //Mar van a listanak eleme. Az utolso utan fuzzuk.
+        ((MyInput_t*)manager->lastInput)->next = (struct MyInput_t*) input;
+    }
+    //A sort lezarjuk. Ez lesz az utolso.
+    input->next=NULL;
+    manager->lastInput=input;
+
+    //A bemenethez tartozo idozito letrehozasa a manager ala tartozo idozites
+    //manager ala...
+
+    //MySwTimer_addTimer(&manager->timerManager, &input->timer);
 }
 //------------------------------------------------------------------------------
 static void __attribute__((noreturn)) MyInputs_task(void* taskParam)
@@ -54,15 +86,38 @@ static void __attribute__((noreturn)) MyInputs_task(void* taskParam)
     //A taszk varakozasanak ideje. A legelso alkalomaml le fog futni a taszk
     TickType_t waitTime=0; //portMAX_DELAY;
 
+    //Bemenetek kezdo allapotanak felvetele.
+    MyInput_t* input=manager->firstInput;
+    while(input)
+    {
+        MyInput_sample_t sample=input->cfg->samplingFunc(input->cfg->privData);
+        input->lastSample=sample;
+        input->state=sample;
+        input->lastState=sample;
+        input=(MyInput_t*)input->next;
+    }
+
+
+    //Pollozas idozites inditasa...
+    MySwTimer_runManager(&manager->timerManager, MyRTOS_getTick());
+    MySwTimer_start(&manager->pollTimer, manager->pollTime, manager->pollTime);
+
     //Vezerles fociklusa
     while(1)
     {
+        waitTime=MySwTimer_getWaitTime32(&manager->timerManager);
+
         //varakozas esemenyre vagy idozitesre....
         uint32_t notifyEvents=0;
         xTaskNotifyWait(0, 0xffffffff, &notifyEvents, waitTime);
 
         //Aktualis ido lekerdezese
         uint64_t time=MyRTOS_getTick();
+        MySwTimer_runManager(&manager->timerManager, time);
+
+        //Az osszes bemenetre vonatkozolag ebebn az idopillanatban lenen valami
+        //tennivalo. Ha ez 0 a ciklus utan, akkor a pollozas leallithato.
+        uint64_t nextEventTime=0;
 
         //idorol idore utemesen meghivodo resz, melyben az egyes beregisztralt
         //bemenetek pollozasa tortenik.
@@ -75,12 +130,24 @@ static void __attribute__((noreturn)) MyInputs_task(void* taskParam)
             //Mintavett allapot magas szintu kiertekelese
             MyInputs_processInput(input, time);
 
+            //Az osszes bemenetre nezve a kovetkezo oylan idopont, amikor
+            //kell valamit tenni. A legnagyobb alapjan.
+            if (input->nextEventTime > nextEventTime)
+            {
+                nextEventTime=input->nextEventTime;
+            }
+
             //Lancolt lista soron kovetkezo elemere ugras
             input=(MyInput_t*)input->next;
         }       
 
+        if (nextEventTime)
+        {
+            printf("%d\n", nextEventTime);
+        }
+
         //A bemenetek kezelesehez szukseges idozitesek lekerdezese
-        waitTime=MySwTimer_getWaitTime32(&manager->timerManager);
+        //waitTime=MySwTimer_getWaitTime32(&manager->timerManager);
     } //while(1)
 }
 //------------------------------------------------------------------------------
@@ -90,8 +157,9 @@ static void MyInputs_samplingAndAntibounce(MyInput_t* input, uint64_t time)
     //Bemenet mintavetelezese a beallitott callback funckio segitsegevel
     MyInput_sample_t sample=input->cfg->samplingFunc(input->cfg->privData);
 
-    //Bemenet prellmentesitese...
+    //printf("%d  %d\n", sample, time);
 
+    //Bemenet prellmentesitese...
     if (input->lastSample != sample)
     {   //Tortent allapot valtas az adott bemeneten az elozo mintavetel ota
         //prell idozites inditasa...

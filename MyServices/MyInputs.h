@@ -21,7 +21,7 @@ typedef MyInput_sample_t MyInput_samplingFunc(void* privData);
 //eleresekor meghivando callback funkcio leiroja.
 typedef struct
 {
-    //Az aktiv allapot kezdete ota mert idopont, mejnel jelezni kell
+    //Az aktiv allapot kezdete ota mert idopont, melynel jelezni kell
     uint32_t time;
     //A jelzeskor meghivando callback funkcio
     MyInput_func_t* func;
@@ -84,7 +84,7 @@ typedef struct
     //Az utolso fel/le futo el/allapot valtozas idopillanata
     uint64_t lastEdgeTimeStamp;
 
-    //Adott idonel hosazbb aktiv allapotokhoz kiadott jelzeseket tartja nyilvan
+    //Adott idonel hosszabb aktiv allapotokhoz kiadott jelzeseket tartja nyilvan
     const MyInput_longState_t* nextLongPress;
 
     //A kovetkezo olyan idopillanat, amikor a bemeneten esemeny kovetkezhet be.
@@ -109,10 +109,17 @@ typedef struct
     SemaphoreHandle_t mutex;
     StaticSemaphore_t mutexBuffer;
 
-    //A manager altal kezelt bemenetek lancolt listajanak elso ele
+    //A manager altal kezelt bemenetek lancolt listajanak elso es utolso elemei
     MyInput_t* firstInput;
+    MyInput_t* lastInput;
 
+    //A modul altal kezelt idozitesek managere
     MySwTimerManager_t  timerManager;
+    //Pollozast utemezo idozito
+    MySwTimer_t pollTimer;
+
+    //Polozasi idokoz
+    uint32_t pollTime;
 } MyInputs_manager_t;
 //------------------------------------------------------------------------------
 //Bemenet kezelest megvalosito manager konfiguracioja
@@ -134,6 +141,12 @@ typedef struct
 //Bement kezelo manager kezdeti inicializalasa
 void MyInputs_initManager(MyInputs_manager_t* manager,
                           const MyInputs_managerConfig_t* config);
+
+//Bemenet letrehozasa
+void MyInputs_createInput(MyInput_t* input, const MyInput_config_t* config);
+
+//Bemenet hozzaadasa a manager ala
+void MyInputs_addInput(MyInputs_manager_t* manager, MyInput_t* input);
 
 //True-t ad vissza, ha a kezelesben meg futnak folymatok.
 bool MyInputs_isActive(void);
