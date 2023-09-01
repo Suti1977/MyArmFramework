@@ -143,7 +143,10 @@ static void __attribute__((noreturn)) MyInputs_task(void* taskParam)
 
         if (nextEventTime)
         {
-            printf("%d\n", nextEventTime);
+            //printf("%d\n", nextEventTime);
+            //Ha a nextEventTime==0, akkor nem fut a nyomogomb kiertekeles.
+            //az applikacio akar altathato is.
+            //TODO: kiegesziteni a callbackel!
         }
 
         //A bemenetek kezelesehez szukseges idozitesek lekerdezese
