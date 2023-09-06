@@ -342,19 +342,19 @@ status_t H3LIS331DL_getInterruptStatus(H3LIS331DL_t* dev,
                                        uint8_t itSelect,
                                        uint8_t* regValue);
 
-static inline float H3LIS331DL_from_fs100_to_mg(int16_t lsb)
+static inline float H3LIS331DL_from_fs100_to_g(int16_t lsb)
 {
-  return ((float)lsb * 3.0625f);
+    return ((float)((int32_t)lsb * 49) / 1000.0f);
 }
 
-static inline float H3LIS331DL_from_fs200_to_mg(int16_t lsb)
+static inline float H3LIS331DL_from_fs200_to_g(int16_t lsb)
 {
-  return ((float)lsb * 6.125f);
+    return ((float)((int32_t)lsb * 98) / 1000.0f);
 }
 
-static inline float H3LIS331DL_from_fs400_to_mg(int16_t lsb)
+static inline float H3LIS331DL_from_fs400_to_g(int16_t lsb)
 {
-  return ((float)lsb * 12.1875f);
+    return ((float)((int32_t)lsb * 195) / 1000.0f);
 }
 
 //status_t H3LIS331DL_
