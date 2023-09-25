@@ -61,6 +61,9 @@ typedef enum
 #define BQ24195_REG03_IPRECHG_SHIFT         4
 #define BQ24195_REG03_IPRECHG_MASK          (0xf << BQ24195_REG03_IPRECHG_SHIFT)
 
+#define BQ24195_REG03_ITERM_SHIFT           0
+#define BQ24195_REG03_ITERM_MASK            (0xf << BQ24195_REG03_ITERM_SHIFT)
+
 #define BQ24195_REG04_VREG_SHIFT            2
 #define BQ24195_REG04_VREG_MASK             (0x3f << BQ24195_REG04_VREG_SHIFT)
 
@@ -243,10 +246,13 @@ status_t BQ24195_reset(BQ24195_t* dev);
 //I2C Watchdog timer reset
 status_t BQ24195_resetWatchdog(BQ24195_t* dev);
 
-//Set mimium system voltage
+//Set minium system voltage
 //valid range: 3000mV-3700mV (step: 100mV)
 status_t BQ24195_setMinimumSysVoltage(BQ24195_t* dev,
                                       uint16_t minSys_mV);
+//Read minium system voltage
+status_t BQ24195_readMinimumSysVoltage(BQ24195_t* dev,
+                                       uint16_t* minSys_mV);
 
 //Set charge current
 //valid range: 512mA-4544mA (step: 64mA)
@@ -263,7 +269,7 @@ status_t BQ24195_setPreChargeCurrent(BQ24195_t* dev,
 
 //Set termination current
 //valid range: 128mA-2048mA (step: 128mA)
-status_t BQ24195_setPrechargeCurrent(BQ24195_t* dev,
+status_t BQ24195_setTerminationCurrent(BQ24195_t* dev,
                                      uint16_t prechargeCurrent_mA);
 
 //Set voltage

@@ -108,7 +108,7 @@ status_t BQ24195_resetWatchdog(BQ24195_t* dev)
     return BQ24195_writeReg(dev, BQ24195_REG01, regData);
 }
 //------------------------------------------------------------------------------
-//Set mimium system voltage
+//Set minium system voltage
 //valid range: 3000mV-3700mV (step: 100mV)
 status_t BQ24195_setMinimumSysVoltage(BQ24195_t* dev,
                                       uint16_t minSys_mV)
@@ -127,6 +127,21 @@ status_t BQ24195_setMinimumSysVoltage(BQ24195_t* dev,
     return BQ24195_writeReg(dev, BQ24195_REG01, regData);
 }
 //------------------------------------------------------------------------------
+//Read minium system voltage
+status_t BQ24195_readMinimumSysVoltage(BQ24195_t* dev,
+                                       uint16_t* minSys_mV)
+{
+    status_t status;
+    uint8_t regData;
+    status=BQ24195_readReg(dev, BQ24195_REG01, &regData);
+    if (status) return status;
+
+    regData &=  BQ24195_REG01_SYS_MINV_MASK;
+    regData >>= BQ24195_REG01_SYS_MINV_SHIFT;
+    *minSys_mV = ((uint16_t)regData * 100) + 3000;
+
+    return status;
+}
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 //TODO:  BIT5 es BIT4 nincs meg kezelve!!!!
@@ -185,20 +200,20 @@ status_t BQ24195_setPreChargeCurrent(BQ24195_t* dev,
 //------------------------------------------------------------------------------
 //Set termination current
 //valid range: 128mA-2048mA (step: 128mA)
-status_t BQ24195_setPrechargeCurrent(BQ24195_t* dev,
-                                     uint16_t prechargeCurrent_mA)
+status_t BQ24195_setTerminationCurrent(BQ24195_t* dev,
+                                     uint16_t terminationCurrent_mA)
 {
-    if (prechargeCurrent_mA <  128) prechargeCurrent_mA=128; else
-    if (prechargeCurrent_mA > 2048) prechargeCurrent_mA=2048;
-    prechargeCurrent_mA = (prechargeCurrent_mA - 512) / 128;
-    prechargeCurrent_mA <<= BQ24195_REG03_IPRECHG_SHIFT;
+    if (terminationCurrent_mA <  128) terminationCurrent_mA=128; else
+    if (terminationCurrent_mA > 2048) terminationCurrent_mA=2048;
+    terminationCurrent_mA = (terminationCurrent_mA - 512) / 128;
+    terminationCurrent_mA <<= BQ24195_REG03_ITERM_SHIFT;
 
     status_t status;
     uint8_t regData;
     status=BQ24195_readReg(dev, BQ24195_REG03, &regData);
     if (status) return status;
-    regData &= ~BQ24195_REG03_IPRECHG_MASK;
-    regData |= prechargeCurrent_mA;
+    regData &= ~BQ24195_REG03_ITERM_MASK;
+    regData |= terminationCurrent_mA;
     return BQ24195_writeReg(dev, BQ24195_REG03, regData);
 }
 //------------------------------------------------------------------------------
