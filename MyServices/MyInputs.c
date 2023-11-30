@@ -115,7 +115,7 @@ static void __attribute__((noreturn)) MyInputs_task(void* taskParam)
         uint64_t time=MyRTOS_getTick();
         MySwTimer_runManager(&manager->timerManager, time);
 
-        //Az osszes bemenetre vonatkozolag ebebn az idopillanatban lenen valami
+        //Az osszes bemenetre vonatkozolag ebben az idopillanatban lenen valami
         //tennivalo. Ha ez 0 a ciklus utan, akkor a pollozas leallithato.
         uint64_t nextEventTime=0;
 
