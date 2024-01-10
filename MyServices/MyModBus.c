@@ -529,16 +529,16 @@ static void MyModBus_readHoldingRegister(MyModBus_t* this)
             }
 
             //Az olvaso fuggvenynek atadando regiszter mennyiseg.
-            //(Az olvaso fuggveny ebben adja majd vissza tenylegesen olvasott
+            //(Az olvaso fuggveny ebbe adja majd vissza a tenylegesen olvasott
             //regiszter szamot.)
             uint16_t funcQuantity=leftCnt;
             //A tartomanybol hatralevo regiszterek szama
             uint16_t leftInRange;
-            //A tartomanybon beluli elso regiszter
+            //A tartomanyon beluli elso regiszter
             uint16_t offset=addr-tablePtr->startAddress;
 
             if (offset>0)
-            {   //a regisztertartalom koztes elemetol indul a lekerdezes.
+            {   //a regiszter tartalom koztes elemetol indul a lekerdezes.
                 leftInRange = tablePtr->qantity-offset;
             } else
             {
@@ -548,7 +548,7 @@ static void MyModBus_readHoldingRegister(MyModBus_t* this)
             if (funcQuantity>leftInRange) funcQuantity=leftInRange;
 
             uint16_t x=funcQuantity;
-            //olvado fuggveny meghivasa.
+            //olvaso fuggveny meghivasa.
             //(A ciklus elejen az ellenorzes miatt, csak akkor kerulhet ide a
             //vezerles, ha van definialva olvaso fuggveny.)
             status=tablePtr->getFunc(offset,
@@ -558,8 +558,8 @@ static void MyModBus_readHoldingRegister(MyModBus_t* this)
             if (status) goto error;
 
             dest+=funcQuantity;
-            //Amennyivel kevesebbet tett a sterambe a fuggevny, annyi dumy
-            //ertekkel kel feltolteni. fillCnt-be lesz beallitva...
+            //Amennyivel kevesebbet tett a sterambe a fuggveny, annyi dumy
+            //ertekkel kell feltolteni. fillCnt-be lesz beallitva...
             fillCnt=funcQuantity-x;
             addr+=(funcQuantity+fillCnt);
             leftCnt-=(funcQuantity+fillCnt);
