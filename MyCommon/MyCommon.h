@@ -17,7 +17,7 @@
 #include "MyRTOS.h"
 #endif
 
-#ifndef ASSERT(e)
+#ifndef ASSERT
 #define ASSERT(e) assert(e)
 #endif
 //------------------------------------------------------------------------------
