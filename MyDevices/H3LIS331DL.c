@@ -172,7 +172,7 @@ status_t H3LIS331DL_setInterruptControl(H3LIS331DL_t* dev,
                (lir2  << 5) |
                (i2Cfg << 3) |
                (lir1  << 2) |
-               (i2Cfg << 0);
+               (i1Cfg << 0);
 
     status=H3LIS331DL_writeReg(dev, H3LIS331DL_REGADDR__CTRL_REG3, regValue);
     return status;
