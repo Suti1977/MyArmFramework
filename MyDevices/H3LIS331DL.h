@@ -344,6 +344,7 @@ status_t H3LIS331DL_getInterruptStatus(H3LIS331DL_t* dev,
 
 static inline float H3LIS331DL_from_fs100_to_g(int16_t lsb)
 {
+    //return ((float)lsb * 0.003f);
     return ((float)((int32_t)lsb * 49) / 1000.0f);
 }
 

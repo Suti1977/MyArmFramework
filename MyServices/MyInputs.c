@@ -192,8 +192,7 @@ static void MyInputs_samplingAndAntibounce(MyInput_t* input, uint64_t time)
 //------------------------------------------------------------------------------
 //Mar pergesmentesitett bemenet magas szintu kezelese
 static void MyInputs_processInput(MyInput_t* input, uint64_t time)
-{
-    bool timingRequest=false;
+{    
 
     if (input->lastState != input->state)
     {   //Valtozott a bemenet

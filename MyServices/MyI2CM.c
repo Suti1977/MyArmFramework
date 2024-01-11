@@ -164,7 +164,7 @@ status_t MYI2CM_transfer(MyI2CM_Device_t* i2cDevice,
 
 
 
-    int retryCnt=0;
+    uint32_t retryCnt=0;
 
     //Arbitacio vesztes/busz hiba eseten ujra probalkozik. (Addig ciklus....)
     while(1)

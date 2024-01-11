@@ -399,8 +399,7 @@ status_t BQ24195_setBatteryFaultInterrupt(BQ24195_t* dev, bool enable)
 //Read system status
 status_t BQ24195_readSystemStatus(BQ24195_t* dev,
                                   BQ24195_systemStatus_t* sysStatus)
-{
-    status_t status;
+{    
     return BQ24195_readReg(dev, BQ24195_REG08, (uint8_t*) sysStatus);
 }
 //------------------------------------------------------------------------------
@@ -408,7 +407,6 @@ status_t BQ24195_readSystemStatus(BQ24195_t* dev,
 status_t BQ24195_readFaultInfo(BQ24195_t* dev,
                                BQ24195_faultInfo_t* faultInfo)
 {
-    status_t status;
     return BQ24195_readReg(dev, BQ24195_REG09, (uint8_t*) faultInfo);
 }
 //------------------------------------------------------------------------------

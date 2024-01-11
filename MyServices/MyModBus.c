@@ -16,8 +16,6 @@
 #include "MyDump.h"
 #endif
 
-static void __attribute__((noreturn)) MyModBus_task(void* taskParam);
-
 static uint16_t MyModBus_CRC16(const uint8_t *nData, uint16_t wLength);
 static void MyModBus_parseFunction(MyModBus_t* this);
 static void MyModBus_sendResponse(MyModBus_t* this);
