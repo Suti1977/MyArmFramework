@@ -7,6 +7,10 @@
 #define MYSWTIMER_H_
 
 #include "MyCommon.h"
+
+//Idozites letelte eseten a MySwTimer_runManager() futtatasa alatt hivott
+//callback tipusa;
+typedef void MySwTimer_expiredFunc_t(void* callbackData);
 //------------------------------------------------------------------------------
 //Idozito leiro definicioja. Minden idoziteshez tartozik egy ilyen leiro.
 typedef struct
@@ -27,6 +31,11 @@ typedef struct
     //Az idozitot kezelo managerre mutat;
     struct MySwTimerManager_t* manager;
 
+    //Idozites letelte eseten a MySwTimer_runManager() futtatasa alatt hivott
+    //callback
+    MySwTimer_expiredFunc_t* expiredFunc;
+    //Tetszoleges adat a callbackek hivasakor atadott parameterhez
+    void* callbackData;
 
     //Lancolt lista kezeleshez szukseges valtozok
     struct MySwTimer_t* next;
@@ -70,7 +79,7 @@ void MySwTimer_setTime(MySwTimerManager_t* manager, uint64_t time);
 uint64_t MySwTimer_getWaitTime64(MySwTimerManager_t* manager);
 //Annak az idonek a lekerdezese, amennyi ido mulva a managert ujra futtatni kell.
 //A lekerdezes 32 bites intet ad vissza, es PORT_MAX_DELAY vagy 0xffffffff-ra
-//kerul szaturalasra, ha 32 bitnel naygaobb szamertek jonne ki.
+//kerul szaturalasra, ha 32 bitnel nagyobb szamertek jonne ki.
 uint32_t MySwTimer_getWaitTime32(MySwTimerManager_t* manager);
 
 //Timer inditasa.
@@ -91,6 +100,10 @@ bool MySwTimer_expired(MySwTimer_t* timer);
 //Annak lekerdzese, hogy az idozito aktiv-e
 bool MySwTimer_isActive(MySwTimer_t* timer);
 
+//Idozites leteltekor meghivodo callback funkcio beregisztralasa
+void MySwTimer_registerExpiredFunc(MySwTimer_t* timer,
+                                   MySwTimer_expiredFunc_t* func,
+                                   void* callbackData);
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 #endif //MYSWTIMER_H_

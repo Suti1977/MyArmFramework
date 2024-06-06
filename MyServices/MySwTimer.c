@@ -115,8 +115,14 @@ status_t MySwTimer_runManager(MySwTimerManager_t* manager, uint64_t time)
 
         //A timer idozitese lejart.
 
-        //jelezi a timerben
+        //jelzi a timerben
         timer->expired=true;
+
+        //Ha van beregisztralva callback funkco, akkor azt meghivja
+        if (timer->expiredFunc)
+        {
+            timer->expiredFunc(timer->callbackData);
+        }
 
         if (timer->periodTime)
         {   //Ez egy periodikusan mukodo idozito. Uj idozitesi idopont
@@ -288,5 +294,14 @@ void MySwTimer_start(MySwTimer_t* timer,
         timer->active=true;
     }
 
+}
+//------------------------------------------------------------------------------
+//Idozites leteltekor meghivodo callback funkcio beregisztralasa
+void MySwTimer_registerExpiredFunc(MySwTimer_t* timer,
+                                   MySwTimer_expiredFunc_t* func,
+                                   void* callbackData)
+{
+    timer->expiredFunc=func;
+    timer->callbackData=callbackData;
 }
 //------------------------------------------------------------------------------
