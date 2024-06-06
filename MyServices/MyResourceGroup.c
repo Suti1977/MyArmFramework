@@ -5,10 +5,10 @@
 //------------------------------------------------------------------------------
 #include "MyResourceGroup.h"
 #include <string.h>
-#include "MyLoopedResource.h"
+#include "MyCoopResource.h"
 
 static void __attribute__((noreturn)) MyResourceGroup_task(void* taskParam);
-static void MyResourceGroup_resourceEvent(loopedResourceExtension_t* ext,
+static void MyResourceGroup_resourceEvent(coopResourceExtension_t* ext,
                                           uint32_t events);
 
 static status_t MyResourceGroup_resource_init(void* param);
@@ -82,7 +82,7 @@ void MyResourceGroup_add(resourceGroup_t* group,
     resource->funcs.stop =MyResourceGroup_resource_stop;
     resource->funcsParam =resource;
 
-    loopedResourceExtension_t* ext=(loopedResourceExtension_t*) resource->ext;
+    coopResourceExtension_t* ext=(coopResourceExtension_t*) resource->ext;
 
     //Az eroforrast az altala kezelt elemek lancolt listajahoz adjuk...
     if (group->resources==NULL)
@@ -90,7 +90,7 @@ void MyResourceGroup_add(resourceGroup_t* group,
         group->resources=resource;
     } else
     {   //Mar van eleme a listanak. Az utan fuzzuk a most hozzaadottat...
-        ((loopedResourceExtension_t*)group->lastResource->ext)->next = resource;
+        ((coopResourceExtension_t*)group->lastResource->ext)->next = resource;
     }
     //Ez lesz a lista utolso eleme.
     ext->next=NULL;
@@ -111,7 +111,7 @@ static status_t MyResourceGroup_resource_init(void* param)
 {
     status_t status=kStatus_Success;
     resource_t* resource=(resource_t*) param;
-    loopedResourceExtension_t* ext=(loopedResourceExtension_t*) resource->ext;
+    coopResourceExtension_t* ext=(coopResourceExtension_t*) resource->ext;
 
     if (ext->cfg->initFunc)
     {   //init funkcio meghivasa, mivel van ilyen beallitva
@@ -129,14 +129,14 @@ static status_t MyResourceGroup_resource_start(void* param)
 {
     status_t status=kStatus_Success;
     resource_t* resource=(resource_t*) param;
-    loopedResourceExtension_t* ext=(loopedResourceExtension_t*) resource->ext;
+    coopResourceExtension_t* ext=(coopResourceExtension_t*) resource->ext;
 
     if (ext->cfg->startRequestFunc)
     {   //Inditasi kerelem funkcio meghivasa, mivel van ilyen beallitva
         ext->cfg->startRequestFunc(ext->cfg->callbackData);
     }
 
-    MyResourceGroup_resourceEvent(ext, GROUPED_RESOURCE_EVENT__START_REQUEST);
+    MyResourceGroup_resourceEvent(ext, MY_COOP_RESOURCE_EVENT__START_REQUEST);
 
     return status;
 }
@@ -147,14 +147,14 @@ static status_t MyResourceGroup_resource_stop(void* param)
 {
     status_t status=kStatus_Success;
     resource_t* resource=(resource_t*) param;
-    loopedResourceExtension_t* ext=(loopedResourceExtension_t*) resource->ext;
+    coopResourceExtension_t* ext=(coopResourceExtension_t*) resource->ext;
 
     if (ext->cfg->stopRequestFunc)
     {   //Lealitasi kerelem funkcio meghivasa, mivel van ilyen beallitva
         ext->cfg->stopRequestFunc(ext->cfg->callbackData);
     }
 
-    MyResourceGroup_resourceEvent(ext, GROUPED_RESOURCE_EVENT__STOP_REQUEST);
+    MyResourceGroup_resourceEvent(ext, MY_COOP_RESOURCE_EVENT__STOP_REQUEST);
 
     return status;
 }
@@ -188,10 +188,10 @@ static void __attribute__((noreturn)) MyResourceGroup_task(void* taskParam)
         resource_t* resource=this->resources;
         while(resource)
         {
-            loopedResourceExtension_t* ext;
-            ext=(loopedResourceExtension_t*) resource->ext;
+            coopResourceExtension_t* ext;
+            ext=(coopResourceExtension_t*) resource->ext;
 
-            MyLoopedResource_runResource(resource);
+            MyCoopResource_runResource(resource);
 
             resource=ext->next;
         }
@@ -203,7 +203,7 @@ static void __attribute__((noreturn)) MyResourceGroup_task(void* taskParam)
     }
 }
 //------------------------------------------------------------------------------
-static void MyResourceGroup_resourceEvent(loopedResourceExtension_t* ext,
+static void MyResourceGroup_resourceEvent(coopResourceExtension_t* ext,
                                           uint32_t events)
 {
     //Esemeny hozzaadasa
