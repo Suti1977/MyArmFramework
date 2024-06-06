@@ -135,7 +135,7 @@ typedef struct
     //Eroforras futtatas allapotgepe
     MySM_t sm;
 
-    //Loopot idozito timer. (Az eroforars  csoporthoz valo hozzaadaskor kerul
+    //Loopot idozito timer. (Az eroforras  csoporthoz valo hozzaadaskor kerul
     //beallitasra, es a kooperativ eroforras csoport managerehez
     //beregisztralasra.)
     MySwTimer_t loopTimer;

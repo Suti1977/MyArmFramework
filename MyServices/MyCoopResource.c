@@ -58,7 +58,7 @@ void MyCoopResource_runResource(resource_t* resource)
     bool loopTimerExpired=MySwTimer_expired(&ext->loopTimer);
     if (loopTimerExpired)
     {
-        //Jelzes az eroforarsnak, hogy az eloirt idozites letelte miatt (is)
+        //Jelzes az eroforrasnak, hogy az eloirt idozites letelte miatt (is)
         //fut.
         ext->control.timed=true;
 

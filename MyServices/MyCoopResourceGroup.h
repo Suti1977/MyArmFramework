@@ -50,14 +50,14 @@ typedef struct
     //Eroforrasok kozos idozito managgere
     MySwTimerManager_t  timerManager;
 
-} resourceGroup_t;
+} coopResourceGroup_t;
 //------------------------------------------------------------------------------
 //Eroforrasok csoportjat futtato modul letrehozasa es inicializalasa
-void MyCoopResourceGroup_create(resourceGroup_t* group,
+void MyCoopResourceGroup_create(coopResourceGroup_t* group,
                                 const coopResourceGroupConfig_t* cfg);
 
 //Eroforras hozaadasa a csoporthoz.
-void MyCoopResourceGroup_add(resourceGroup_t* group,
+void MyCoopResourceGroup_add(coopResourceGroup_t* group,
                              resource_t* resource);
 
 //------------------------------------------------------------------------------

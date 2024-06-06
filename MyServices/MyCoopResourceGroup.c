@@ -18,10 +18,10 @@ static status_t MyCoopResourceGroup_resource_stop(void* param);
 #define COOP_RESOURCE_GROUP_EVENET__RUN_REQUEST  BIT(0)
 //------------------------------------------------------------------------------
 //Eroforrasok csoportjat futtato modul letrehozasa es inicializalasa
-void MyCoopResourceGroup_create(resourceGroup_t* group,
+void MyCoopResourceGroup_create(coopResourceGroup_t* group,
                                 const coopResourceGroupConfig_t* cfg)
 {
-    memset(group, 0, sizeof(resourceGroup_t));
+    memset(group, 0, sizeof(coopResourceGroup_t));
     group->cfg=cfg;
 
     //Eroforrasok csoportjat futtato taszk letrehozasa...
@@ -71,12 +71,12 @@ void MyCoopResourceGroup_create(resourceGroup_t* group,
 }
 //------------------------------------------------------------------------------
 //Eroforras hozaadasa a csoporthoz.
-void MyCoopResourceGroup_add(resourceGroup_t* group,
+void MyCoopResourceGroup_add(coopResourceGroup_t* group,
                          resource_t* resource)
 {
     xSemaphoreTake(group->mutex, portMAX_DELAY);
 
-    //Az eroforars vezerlo callbackjeit a modulhoz iranyitjuk...
+    //Az eroforras vezerlo callbackjeit a modulhoz iranyitjuk...
     resource->funcs.init =MyCoopResourceGroup_resource_init;
     resource->funcs.start=MyCoopResourceGroup_resource_start;
     resource->funcs.stop =MyCoopResourceGroup_resource_stop;
@@ -162,7 +162,7 @@ static status_t MyCoopResourceGroup_resource_stop(void* param)
 //Eroforrasokat futtato taszk
 static void __attribute__((noreturn)) MyCoopResourceGroup_task(void* taskParam)
 {
-    resourceGroup_t* this=(resourceGroup_t*) taskParam;
+    coopResourceGroup_t* this=(coopResourceGroup_t*) taskParam;
 
     uint32_t waitTime=portMAX_DELAY;
 
@@ -212,7 +212,7 @@ static void MyCoopResourceGroup_resourceEvent(coopResourceExtension_t* ext,
     MY_LEAVE_CRITICAL();
 
     //Eroforrasokat futtato csoportos szal ebresztese
-    xTaskNotify(((resourceGroup_t*)ext->group)->taskHandle,
+    xTaskNotify(((coopResourceGroup_t*)ext->group)->taskHandle,
                 COOP_RESOURCE_GROUP_EVENET__RUN_REQUEST,
                 eSetBits);
 }
