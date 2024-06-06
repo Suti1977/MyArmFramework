@@ -1,25 +1,25 @@
 //------------------------------------------------------------------------------
-//  Eroforrasok csoportjat futtato modul
+//  Kooperative mukodesu eroforrasok csoportjat futtato modul
 //
-//    File: MyResourceGroup.c
+//    File: MyCoopResourceGroup.c
 //------------------------------------------------------------------------------
-#include "MyResourceGroup.h"
-#include <string.h>
+#include "MyCoopResourceGroup.h"
 #include "MyCoopResource.h"
+#include <string.h>
 
-static void __attribute__((noreturn)) MyResourceGroup_task(void* taskParam);
-static void MyResourceGroup_resourceEvent(coopResourceExtension_t* ext,
-                                          uint32_t events);
+static void __attribute__((noreturn)) MyCoopResourceGroup_task(void* taskParam);
+static void MyCoopResourceGroup_resourceEvent(coopResourceExtension_t* ext,
+                                              uint32_t events);
 
-static status_t MyResourceGroup_resource_init(void* param);
-static status_t MyResourceGroup_resource_start(void* param);
-static status_t MyResourceGroup_resource_stop(void* param);
+static status_t MyCoopResourceGroup_resource_init(void* param);
+static status_t MyCoopResourceGroup_resource_start(void* param);
+static status_t MyCoopResourceGroup_resource_stop(void* param);
 
-#define RESOURCE_GROUP_EVENET__RUN_REQUEST  BIT(0)
+#define COOP_RESOURCE_GROUP_EVENET__RUN_REQUEST  BIT(0)
 //------------------------------------------------------------------------------
 //Eroforrasok csoportjat futtato modul letrehozasa es inicializalasa
-void MyResourceGroup_create(resourceGroup_t* group,
-                            const resourceGroupConfig_t* cfg)
+void MyCoopResourceGroup_create(resourceGroup_t* group,
+                                const coopResourceGroupConfig_t* cfg)
 {
     memset(group, 0, sizeof(resourceGroup_t));
     group->cfg=cfg;
@@ -30,7 +30,7 @@ void MyResourceGroup_create(resourceGroup_t* group,
     if (cfg->taskStackBuffer)
     {   //Van allokalva taszk. Statilus taszk letrehozas
         #if configSUPPORT_STATIC_ALLOCATION
-        group->taskHandle=xTaskCreateStatic( MyResourceGroup_task,
+        group->taskHandle=xTaskCreateStatic( MyCoopResourceGroup_task,
                                              cfg->name,
                                              cfg->taskStackSize,
                                              (void*)group,
@@ -47,7 +47,7 @@ void MyResourceGroup_create(resourceGroup_t* group,
     } else
     {
         //Eroforrast futtato taszk letrehozasa
-        if (xTaskCreate(MyResourceGroup_task,
+        if (xTaskCreate(MyCoopResourceGroup_task,
                         cfg->name,
                         (const configSTACK_DEPTH_TYPE) cfg->taskStackSize,
                         (void*)group,
@@ -71,15 +71,15 @@ void MyResourceGroup_create(resourceGroup_t* group,
 }
 //------------------------------------------------------------------------------
 //Eroforras hozaadasa a csoporthoz.
-void MyResourceGroup_add(resourceGroup_t* group,
+void MyCoopResourceGroup_add(resourceGroup_t* group,
                          resource_t* resource)
 {
     xSemaphoreTake(group->mutex, portMAX_DELAY);
 
     //Az eroforars vezerlo callbackjeit a modulhoz iranyitjuk...
-    resource->funcs.init =MyResourceGroup_resource_init;
-    resource->funcs.start=MyResourceGroup_resource_start;
-    resource->funcs.stop =MyResourceGroup_resource_stop;
+    resource->funcs.init =MyCoopResourceGroup_resource_init;
+    resource->funcs.start=MyCoopResourceGroup_resource_start;
+    resource->funcs.stop =MyCoopResourceGroup_resource_stop;
     resource->funcsParam =resource;
 
     coopResourceExtension_t* ext=(coopResourceExtension_t*) resource->ext;
@@ -107,7 +107,7 @@ void MyResourceGroup_add(resourceGroup_t* group,
 //------------------------------------------------------------------------------
 //Egy eroforras init-kor hivodo callback
 //[MyRM taszkbol hivva]
-static status_t MyResourceGroup_resource_init(void* param)
+static status_t MyCoopResourceGroup_resource_init(void* param)
 {
     status_t status=kStatus_Success;
     resource_t* resource=(resource_t*) param;
@@ -125,7 +125,7 @@ static status_t MyResourceGroup_resource_init(void* param)
 //------------------------------------------------------------------------------
 //Egy eroforras inditasi kerelmekor hivodo callback
 //[MyRM taszkbol hivva]
-static status_t MyResourceGroup_resource_start(void* param)
+static status_t MyCoopResourceGroup_resource_start(void* param)
 {
     status_t status=kStatus_Success;
     resource_t* resource=(resource_t*) param;
@@ -136,14 +136,14 @@ static status_t MyResourceGroup_resource_start(void* param)
         ext->cfg->startRequestFunc(ext->cfg->callbackData);
     }
 
-    MyResourceGroup_resourceEvent(ext, MY_COOP_RESOURCE_EVENT__START_REQUEST);
+    MyCoopResourceGroup_resourceEvent(ext, MY_COOP_RESOURCE_EVENT__START_REQUEST);
 
     return status;
 }
 //------------------------------------------------------------------------------
 //Egy eroforras leallitasi kerelmekor hivodo callback
 //[MyRM taszkbol hivva]
-static status_t MyResourceGroup_resource_stop(void* param)
+static status_t MyCoopResourceGroup_resource_stop(void* param)
 {
     status_t status=kStatus_Success;
     resource_t* resource=(resource_t*) param;
@@ -154,13 +154,13 @@ static status_t MyResourceGroup_resource_stop(void* param)
         ext->cfg->stopRequestFunc(ext->cfg->callbackData);
     }
 
-    MyResourceGroup_resourceEvent(ext, MY_COOP_RESOURCE_EVENT__STOP_REQUEST);
+    MyCoopResourceGroup_resourceEvent(ext, MY_COOP_RESOURCE_EVENT__STOP_REQUEST);
 
     return status;
 }
 //------------------------------------------------------------------------------
 //Eroforrasokat futtato taszk
-static void __attribute__((noreturn)) MyResourceGroup_task(void* taskParam)
+static void __attribute__((noreturn)) MyCoopResourceGroup_task(void* taskParam)
 {
     resourceGroup_t* this=(resourceGroup_t*) taskParam;
 
@@ -169,7 +169,7 @@ static void __attribute__((noreturn)) MyResourceGroup_task(void* taskParam)
     //Generalt esemeny, melyre indulaskor az allapotgepek le tudnak futni, es
     //fel tudjak venni az alapallapotot.
     xTaskNotify(this->taskHandle,
-                RESOURCE_GROUP_EVENET__RUN_REQUEST,
+                COOP_RESOURCE_GROUP_EVENET__RUN_REQUEST,
                 eSetBits);
 
     //Csoport fociklus...
@@ -203,7 +203,7 @@ static void __attribute__((noreturn)) MyResourceGroup_task(void* taskParam)
     }
 }
 //------------------------------------------------------------------------------
-static void MyResourceGroup_resourceEvent(coopResourceExtension_t* ext,
+static void MyCoopResourceGroup_resourceEvent(coopResourceExtension_t* ext,
                                           uint32_t events)
 {
     //Esemeny hozzaadasa
@@ -213,7 +213,7 @@ static void MyResourceGroup_resourceEvent(coopResourceExtension_t* ext,
 
     //Eroforrasokat futtato csoportos szal ebresztese
     xTaskNotify(((resourceGroup_t*)ext->group)->taskHandle,
-                RESOURCE_GROUP_EVENET__RUN_REQUEST,
+                COOP_RESOURCE_GROUP_EVENET__RUN_REQUEST,
                 eSetBits);
 }
 //------------------------------------------------------------------------------
