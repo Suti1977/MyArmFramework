@@ -105,18 +105,8 @@ MYSM_STATE(MyCoopResource_sm_waitingForStart)
 
         //Start kerelemre varakozik a taszk
         this->control.waitedEvents=MY_COOP_RESOURCE_EVENT__START_REQUEST;
-        //Vegtelen ideig
         this->control.waitTime=portMAX_DELAY;
-        this->control.done=0;
-        this->control.prohibitStop=0;
-        this->control.stopRequest=0;
         this->errorCode=kStatus_Success;
-
-        //Alapertelmezesben azt mondjuk, hogy a startFunc() callback meghivasa
-        //utan elindult az eroforras. Ezt a jelzest felul lehet biralni a
-        //startFunc() callbackben, de akkor a loop-ban futo applikacionak
-        //kell tudnia jeleznie az eroforras manager fele, hogy elkeszult.
-        this->control.run=1;
 
         //Ha futna a loop idozites, akkor azt le kell allitani!
         MySwTimer_stop(&this->loopTimer);
@@ -144,6 +134,24 @@ MYSM_STATE(MyCoopResource_sm_starting)
         printf("MyCoopResource STARTING... (%s)\n", this->cfg->name);
         #endif
 
+        //A start elott 0 idozites kerul beallitasra, igy ha azt a start
+        //callbackben nem biraljak felul, akkor a loop fuggveny azonnal le
+        //fog futni.
+        this->control.waitTime=0;
+
+        this->control.waitedEvents=0;
+        this->control.done=0;
+        this->control.prohibitStop=0;
+        this->control.stopRequest=0;
+        this->control.timed=0;
+        this->errorCode=kStatus_Success;
+
+        //Alapertelmezesben azt mondjuk, hogy a startFunc() callback meghivasa
+        //utan elindult az eroforras. Ezt a jelzest felul lehet biralni a
+        //startFunc() callbackben, de akkor a loop-ban futo applikacionak
+        //kell tudnia jeleznie az eroforras manager fele, hogy elkeszult.
+        this->control.run=1;
+
         //Eroforras indul...
         if (this->cfg->startFunc)
         {   //eroforrast indito funkcio meghivasa, mivel van ilyen beallitva
@@ -160,11 +168,22 @@ MYSM_STATE(MyCoopResource_sm_starting)
             MYSM_CHANGE_STATE(MyCoopResource_sm_run);
         }
 
-        return status;
+        if (this->control.waitTime)
+        {   //Van eloirva varakozas a start fuggvenyben. Kilepes az allapot-
+            //gepbol, hogy az esemenyek/idozitesek ervenyre juthassanak a
+            //loop funkcio meghivasa elott.
+            return status;
+        }
+
+        //Itt mivel az idozites 0, es emiatt azonnal futatjuk a loop funkciot,
+        //jelezni kell az idozitettseget!
+        this->control.timed=true;
     }
 
+    //<--ide akkor jut, ha a start fuggvenyben nem mondtak azt, hogy elindult
+    //az eroforras, tehat a control.run flag-je torolva lett.
 
-    //Applikacios loop futtatasa, melyben az eroforras indul.
+    //Applikacios loop futtatasa, melyben az eroforras indulast vegrehajtja...
     if (this->cfg->loopFunc)
     {
         status=this->cfg->loopFunc(this->cfg->callbackData,
@@ -174,6 +193,8 @@ MYSM_STATE(MyCoopResource_sm_starting)
 
     if (this->control.run)
     {   //Az eroforras elindult. (A loop-ban lett beallitva a jelzes)
+        //A run allapotot veszi fel.
+
         MYSM_CHANGE_STATE(MyCoopResource_sm_run);
     }
 
@@ -196,8 +217,25 @@ MYSM_STATE(MyCoopResource_sm_run)
         printf("MyCoopResource RUN. (%s)\n", this->cfg->name);
         #endif
 
+
         //Jelzes a manager fele, hogy fut az eroforras
         MyRM_resourceStatus(this->resource, RESOURCE_RUN, status);
+
+        //Ezen a ponton ki kell lepni az allapotgepbol, hogy az esemeny
+        //illetve idozitesek lefuthassanak a loop funkcio elott, a start
+        //callbackben esetlegesen feluldefinialt feltetelek szerint, de csak ha
+        //van eloirva idozites.
+        if (this->control.waitTime)
+        {
+            //A tovabbiakban figyelni fogja a leallitasi kerelmet is.
+            this->control.waitedEvents = MY_COOP_RESOURCE_EVENT__STOP_REQUEST;
+
+            return status;
+        }
+
+        //Itt mivel az idozites 0, es emiatt azonnal futatjuk a loop funkciot,
+        //jelezni kell az idozitettseget!
+        this->control.timed=true;
     }
 
 
@@ -254,6 +292,10 @@ MYSM_STATE(MyCoopResource_sm_stopping)
     {   //leallitasi kerelem van, es mar az applikacio is engedi, azt a prohibit
         //flag (mar) nem tiltja.
 
+        #if COOP_RESOURCE_TRACING
+            printf("MyCoopResource STOP. (%s)\n", this->cfg->name);
+        #endif
+
         if (this->cfg->stopFunc)
         {   //Van megadva leallitasi funkcio. Meghivjuk...
             status=this->cfg->stopFunc(this->cfg->callbackData);
@@ -262,11 +304,6 @@ MYSM_STATE(MyCoopResource_sm_stopping)
                 goto error;
             }
         }
-
-        #if COOP_RESOURCE_TRACING
-                printf("MyCoopResource STOP. (%s)\n", this->cfg->name);
-        #endif
-
 
         //Az eroforras leallt. Reportoljuk az eroforras manager fele...
         MyRM_resourceStatus(this->resource, RESOURCE_STOP, status);
