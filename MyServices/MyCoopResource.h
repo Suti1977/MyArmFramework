@@ -9,7 +9,11 @@
 #include "MyRM.h"
 #include "MySM.h"
 #include "MySwTimer.h"
+#include "MyCoopResourceGroup.h"
 
+//Eroforrashoz rendelt valamelyik timer lejart, vagy valami olyan esemenyt
+//kapott, ami miatt az eroforrast futtatni kell Az eroforrast futtatni kell.
+#define MY_COOP_RESOURCE_EVENT__RUN_REQUEST     BIT(29)
 //Eroforras inditasat eloiro esemeny flag
 #define MY_COOP_RESOURCE_EVENT__START_REQUEST   BIT(30)
 //Eroforras leallitasat kero esemeny flag
@@ -18,8 +22,11 @@
 //Az eroforrast vezerlo valtozok halmaza
 typedef struct
 {
-    //A taszknak kuldott eventek
+    //Az eroforrasnak kuldott eventek
     EventBits_t events;
+
+    //Az eroforrasnak kuldott vezerlo esemenyek
+    EventBits_t controlEvents;
 
     //true, ha a loop azert fut, mert az applikacio altal megadott idozites
     //letelt.
@@ -125,7 +132,7 @@ typedef struct
     uint32_t inputEvents;
 
     //Az eroforarst futtato csoportra mutat
-    struct resourceGroup_t* group;
+    struct coopResourceGroup_t* group;
 
     //Vezerlo valtozok, melyeken keresztul adjuk at a fuggevyneknek a
     //kapott esemeny flageket, de ezen keresztul modosithatjak a callbackek
@@ -146,12 +153,25 @@ typedef struct
 //------------------------------------------------------------------------------
 //Taszkal tamogatott eroforras letrehozasa
 void MyCoopResource_create(resource_t* resource,
-                             coopResourceExtension_t* ext,
-                             const coopResource_config_t* cfg);
+                           coopResourceExtension_t* ext,
+                           const coopResource_config_t* cfg);
 
 //Eroforras kiertekelese/futtatasa
 //[Csoport taszkjabol hiva]
 void MyCoopResource_runResource(resource_t* resource);
+
+//A kooperativ eroforrashoz tartozo taszk handlerenek lekerdezese
+static inline
+TaskHandle_t MyCoopResource_getTaskHandler(resource_t* resource)
+{
+    return ((coopResourceGroup_t*)((coopResourceExtension_t*)resource->ext)->group)->taskHandle;
+}
+
+//Kooperativ eroforrasnak esemeny kuldese
+void MyCoopResource_setEvent(resource_t* resource, uint32_t event);
+
+//Kooperativ eroforrasnak esemeny kuldese megszakitasbol
+void MyCoopResource_setEventFromIsr(resource_t* resource, uint32_t event);
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 #endif //MYCOOPRESOURCE_H_

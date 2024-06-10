@@ -371,4 +371,17 @@ MYSM_STATE(MyCoopResource_sm_error)
     return status;
 }
 //------------------------------------------------------------------------------
+//Kooperativ eroforrasnak esemeny kuldese
+void MyCoopResource_setEvent(resource_t* resource, uint32_t event)
+{
+    MyCoopResourceGroup_setResourceEvent(resource, event);
+}
 //------------------------------------------------------------------------------
+//Kooperativ eroforrasnak esemeny kuldese megszakitasbol
+void MyCoopResource_setEventFromIsr(resource_t* resource, uint32_t event)
+{
+    MyCoopResourceGroup_setResourceEventFromIsr(resource, event);
+}
+//------------------------------------------------------------------------------
+
+

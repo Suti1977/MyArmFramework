@@ -8,9 +8,6 @@
 #include <string.h>
 
 static void __attribute__((noreturn)) MyCoopResourceGroup_task(void* taskParam);
-static void MyCoopResourceGroup_resourceEvent(coopResourceExtension_t* ext,
-                                              uint32_t events);
-
 static status_t MyCoopResourceGroup_resource_init(void* param);
 static status_t MyCoopResourceGroup_resource_start(void* param);
 static status_t MyCoopResourceGroup_resource_stop(void* param);
@@ -97,7 +94,7 @@ void MyCoopResourceGroup_add(coopResourceGroup_t* group,
     group->lastResource=resource;
 
     //Az eroforrashoz megjegyzi a hozza tartozo csoportot is.
-    ext->group=(struct resourceGroup_t*) group;
+    ext->group=(struct coopResourceGroup_t*) group;
 
     //Az loop idozito hozzaadasa az idozites managerhez...
     MySwTimer_addTimer(&group->timerManager, &ext->loopTimer);
@@ -136,7 +133,8 @@ static status_t MyCoopResourceGroup_resource_start(void* param)
         ext->cfg->startRequestFunc(ext->cfg->callbackData);
     }
 
-    MyCoopResourceGroup_resourceEvent(ext, MY_COOP_RESOURCE_EVENT__START_REQUEST);
+    MyCoopResourceGroup_setResourceEvent(resource,
+                                         MY_COOP_RESOURCE_EVENT__START_REQUEST);
 
     return status;
 }
@@ -154,7 +152,8 @@ static status_t MyCoopResourceGroup_resource_stop(void* param)
         ext->cfg->stopRequestFunc(ext->cfg->callbackData);
     }
 
-    MyCoopResourceGroup_resourceEvent(ext, MY_COOP_RESOURCE_EVENT__STOP_REQUEST);
+    MyCoopResourceGroup_setResourceEvent(resource,
+                                         MY_COOP_RESOURCE_EVENT__STOP_REQUEST);
 
     return status;
 }
@@ -203,18 +202,41 @@ static void __attribute__((noreturn)) MyCoopResourceGroup_task(void* taskParam)
     }
 }
 //------------------------------------------------------------------------------
-static void MyCoopResourceGroup_resourceEvent(coopResourceExtension_t* ext,
+//Kooperativ eroforrashoz tartozo esemeny beallitasa
+void MyCoopResourceGroup_setResourceEvent(resource_t* resources,
                                           uint32_t events)
 {
+    coopResourceExtension_t* ext=(coopResourceExtension_t*)resources->ext;
+    coopResourceGroup_t* group=(coopResourceGroup_t*)ext->group;
+
     //Esemeny hozzaadasa
     MY_ENTER_CRITICAL();
     ext->inputEvents |= events;
     MY_LEAVE_CRITICAL();
 
     //Eroforrasokat futtato csoportos szal ebresztese
-    xTaskNotify(((coopResourceGroup_t*)ext->group)->taskHandle,
+    xTaskNotify(group->taskHandle,
                 COOP_RESOURCE_GROUP_EVENET__RUN_REQUEST,
                 eSetBits);
 }
 //------------------------------------------------------------------------------
+//Kooperativ eroforrashoz tartozo esemeny beallitasa megszakitsbol
+void MyCoopResourceGroup_setResourceEventFromIsr(resource_t* resources,
+                                                 uint32_t events)
+{
+    coopResourceExtension_t* ext=(coopResourceExtension_t*)resources->ext;
+    coopResourceGroup_t* group=(coopResourceGroup_t*)ext->group;
+
+    //Esemeny hozzaadasa
+    ext->inputEvents |= events;
+
+    //Eroforrasokat futtato csoportos szal ebresztese...
+
+    BaseType_t higherPriorityTaskWoken=pdFALSE;
+    xTaskNotifyFromISR(group->taskHandle,
+                       events,
+                       eSetBits,
+                       &higherPriorityTaskWoken);
+    portYIELD_FROM_ISR(higherPriorityTaskWoken);
+}
 //------------------------------------------------------------------------------
