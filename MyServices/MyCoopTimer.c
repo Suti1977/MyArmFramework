@@ -5,6 +5,7 @@
 //------------------------------------------------------------------------------
 #include "MyCoopTimer.h"
 #include "MyCoopResourceGroup.h"
+#include "MyCoopResource.h"
 #include <string.h>
 
 static void MyCoopTimer_expired_cb(void* callbackData);
@@ -14,8 +15,9 @@ void MyCoopTimer_createTimer(resource_t* resource, MyCoopTimer_t* timer)
 {
     memset(timer, 0, sizeof(MyCoopTimer_t));
 
-    timer->owner = (coopResourceExtension_t*)resource->ext;
-    coopResourceGroup_t* group=(coopResourceGroup_t*)timer->owner->group;
+    timer->owner = (struct coopResourceExtension_t*)resource->ext;
+    coopResourceGroup_t* group=
+        (coopResourceGroup_t*)((coopResourceExtension_t*)timer->owner)->group;
 
     //Elobb az eroforrast hozza kell adni egy eroforars csoporthoz, es csak
     //utana szabad a timert letrehozni, mivel a csoport timer managerere szukseg
@@ -34,8 +36,9 @@ void MyCoopTimer_createTimer(resource_t* resource, MyCoopTimer_t* timer)
 //Idozito torlese az eroforrasbol
 void MyCoopTimer_deleteTimer(resource_t* resource, MyCoopTimer_t* timer)
 {
-    timer->owner = (coopResourceExtension_t*)resource->ext;
-    coopResourceGroup_t* group=(coopResourceGroup_t*)timer->owner->group;
+    timer->owner = (struct coopResourceExtension_t*)resource->ext;
+    coopResourceGroup_t* group=
+        (coopResourceGroup_t*)((coopResourceExtension_t*)timer->owner)->group;
 
     //Elobb az eroforrast hozza kell adni egy eroforars csoporthoz, es csak
     //utana szabad a timert letrehozni, mivel a csoport timer managerere szukseg
@@ -92,8 +95,9 @@ static void MyCoopTimer_expired_cb(void* callbackData)
 
     //Jelzes az eroforrasnak, hogy timer esemeny tortent, ezert azt futtatni
     //kell!
-    MyCoopResource_setEvent(timer->owner->resource,
-                            MY_COOP_RESOURCE_EVENT__RUN_REQUEST);
+    MyCoopResourceGroup_setResourceTimerExpired(
+                            ((coopResourceExtension_t*)timer->owner)->resource);
+
 
     //Ha van beregisztralva hozza callback, akkro azt i s meghivja
     if (timer->expiredFunc)

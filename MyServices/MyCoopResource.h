@@ -8,12 +8,13 @@
 
 #include "MyRM.h"
 #include "MySM.h"
-#include "MySwTimer.h"
+#include "MyCoopTimer.h"
 #include "MyCoopResourceGroup.h"
 
-//Eroforrashoz rendelt valamelyik timer lejart, vagy valami olyan esemenyt
-//kapott, ami miatt az eroforrast futtatni kell Az eroforrast futtatni kell.
-#define MY_COOP_RESOURCE_EVENT__RUN_REQUEST     BIT(29)
+//Eroforras esemenyt kapott, mely miatt azt futtatni kell
+#define MY_COOP_RESOURCE_EVENT__INPUT_EVENT     BIT(28)
+//Eroforrashoz rendelt valamelyik timer lejart, futtatni kell az eroforrast
+#define MY_COOP_RESOURCE_EVENT__TIMER_EXPIRED   BIT(29)
 //Eroforras inditasat eloiro esemeny flag
 #define MY_COOP_RESOURCE_EVENT__START_REQUEST   BIT(30)
 //Eroforras leallitasat kero esemeny flag
@@ -24,9 +25,6 @@ typedef struct
 {
     //Az eroforrasnak kuldott eventek
     EventBits_t events;
-
-    //Az eroforrasnak kuldott vezerlo esemenyek
-    EventBits_t controlEvents;
 
     //true, ha a loop azert fut, mert az applikacio altal megadott idozites
     //letelt.
@@ -126,7 +124,7 @@ typedef struct
     //Csoport lancolt listajaban a kovetkezo elemet cimzo pointer
     resource_t* next;
 
-    //Az eroforrashoz tartozo vezerlo esemeny flagek
+    //Az eroforrashoz tartozo kulso esemeny flagek
     //Ez kerul masoloasra a control strukturaba futtataskor.
     //Nem szabad hasznalni az eroforrason belul!
     uint32_t inputEvents;
@@ -139,13 +137,21 @@ typedef struct
     //a varakozasi idot, vagy irhatjak elo a varakozasra az eventeket.
     coopResource_control_t control;
 
+    //Az eroforrashoz beallitott vezerlo esemenyek. Ezek kerulnek atmasolasra
+    //a controlEvents mezokbe, az eroforras futtatasakor.
+    //Nem szabad hasznalni az eroforrason belul!
+    uint32_t controlEvnts_async;
+
+    //Az eroforrasnak kuldott vezerlo esemenyek
+    EventBits_t controlEvents;
+
     //Eroforras futtatas allapotgepe
     MySM_t sm;
 
     //Loopot idozito timer. (Az eroforras  csoporthoz valo hozzaadaskor kerul
     //beallitasra, es a kooperativ eroforras csoport managerehez
     //beregisztralasra.)
-    MySwTimer_t loopTimer;
+    MyCoopTimer_t loopTimer;
 
     //Utolso hibakod
     status_t errorCode;

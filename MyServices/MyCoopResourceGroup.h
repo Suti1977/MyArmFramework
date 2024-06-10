@@ -68,6 +68,13 @@ void MyCoopResourceGroup_setResourceEvent(resource_t* resources,
 void MyCoopResourceGroup_setResourceEventFromIsr(resource_t* resources,
                                                  uint32_t events);
 
+//Kooperativ eroforrashoz tartozo vezerlo esemeny beallitasa
+void MyCoopResourceGroup_setResourceControlEvent(resource_t* resources,
+                                                 uint32_t events);
+
+//Kooperativ eroforrashoz tartozo idozites letelt esemeny beallitasa. A timer
+//manager alol hivodik.
+void MyCoopResourceGroup_setResourceTimerExpired(resource_t* resources);
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 #endif //MYCOOPRESOURCEGROUP_H_

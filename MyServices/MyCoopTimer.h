@@ -6,12 +6,14 @@
 #ifndef MYCOOPTIMER_H_
 #define MYCOOPTIMER_H_
 
-#include "MyCoopResource.h"
+#include "MyRM.h"
+#include "MySwTimer.h"
 
 //Idozites letelte eseten, az eroforrascsoport timer managere altal hivott
 //callback definicioja
 typedef void MyCoopTimer_expiredFunc_t(void* callbackData);
 
+struct coopResourceExtension_t;
 //------------------------------------------------------------------------------
 //MyCoopTimer valtozoi
 typedef struct
@@ -20,7 +22,7 @@ typedef struct
     MySwTimer_t timer;
 
     //A timerhez tartozo kooperativ eroforras
-    coopResourceExtension_t* owner;
+    struct coopResourceExtension_t* owner;
 
     //Timer lejartakor hivodo, beregisztralhato callback funkcio
     MyCoopTimer_expiredFunc_t* expiredFunc;
