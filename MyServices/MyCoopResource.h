@@ -127,7 +127,7 @@ typedef struct
     //Az eroforrashoz tartozo kulso esemeny flagek
     //Ez kerul masoloasra a control strukturaba futtataskor.
     //Nem szabad hasznalni az eroforrason belul!
-    uint32_t inputEvents;
+    uint32_t inputEvents_async;
 
     //Az eroforarst futtato csoportra mutat
     struct coopResourceGroup_t* group;
@@ -140,9 +140,9 @@ typedef struct
     //Az eroforrashoz beallitott vezerlo esemenyek. Ezek kerulnek atmasolasra
     //a controlEvents mezokbe, az eroforras futtatasakor.
     //Nem szabad hasznalni az eroforrason belul!
-    uint32_t controlEvnts_async;
+    uint32_t controlEvents_async;
 
-    //Az eroforrasnak kuldott vezerlo esemenyek
+    //Az eroforrasnak kuldott vezerlo esemenyek (controlEvents_async alapjan)
     EventBits_t controlEvents;
 
     //Eroforras futtatas allapotgepe

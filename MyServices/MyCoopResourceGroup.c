@@ -229,8 +229,8 @@ void MyCoopResourceGroup_setResourceEvent(resource_t* resources,
 
     //Esemeny hozzaadasa
     MY_ENTER_CRITICAL();
-    ext->inputEvents |= events;
-    ext->controlEvnts_async |= MY_COOP_RESOURCE_EVENT__INPUT_EVENT;
+    ext->inputEvents_async |= events;
+    ext->controlEvents_async |= MY_COOP_RESOURCE_EVENT__INPUT_EVENT;
     MY_LEAVE_CRITICAL();
 
     //Eroforrasokat futtato csoportos szal ebresztese
@@ -247,8 +247,8 @@ void MyCoopResourceGroup_setResourceEventFromIsr(resource_t* resources,
     coopResourceGroup_t* group=(coopResourceGroup_t*)ext->group;
 
     //Esemeny hozzaadasa
-    ext->inputEvents |= events;
-    ext->controlEvnts_async |= MY_COOP_RESOURCE_EVENT__INPUT_EVENT;
+    ext->inputEvents_async |= events;
+    ext->controlEvents_async |= MY_COOP_RESOURCE_EVENT__INPUT_EVENT;
 
     //Eroforrasokat futtato csoportos szal ebresztese...
 
@@ -269,7 +269,7 @@ void MyCoopResourceGroup_setResourceControlEvent(resource_t* resources,
 
     //Esemeny hozzaadasa
     MY_ENTER_CRITICAL();
-    ext->controlEvnts_async |= events;
+    ext->controlEvents_async |= events;
     MY_LEAVE_CRITICAL();
 
     //Eroforrasokat futtato csoportos szal ebresztese
@@ -286,6 +286,6 @@ void MyCoopResourceGroup_setResourceTimerExpired(resource_t* resources)
     coopResourceGroup_t* group=(coopResourceGroup_t*)ext->group;
 
     //Esemeny hozzaadasa
-    ext->controlEvnts_async |= MY_COOP_RESOURCE_EVENT__TIMER_EXPIRED;
+    ext->controlEvents_async |= MY_COOP_RESOURCE_EVENT__TIMER_EXPIRED;
 }
 //------------------------------------------------------------------------------

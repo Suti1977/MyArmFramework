@@ -50,8 +50,8 @@ void MyCoopResource_runResource(resource_t* resource)
     //Eroforrasnak szolo esemenyek atvetele. Kesobb ezeket hasznalja az
     //allapotgepben...
     MY_ENTER_CRITICAL();
-    ext->controlEvents = ext->controlEvnts_async;
-    ext->controlEvnts_async=0;
+    ext->controlEvents = ext->controlEvents_async;
+    ext->controlEvents_async=0;
 
     if (ext->controlEvents==0)
     {   //Nincs olyan esemeny, ami miatt futtatni kell az eroforrast.
@@ -61,8 +61,8 @@ void MyCoopResource_runResource(resource_t* resource)
         return;
     }
 
-    ext->control.events = ext->inputEvents;
-    ext->inputEvents=0;
+    ext->control.events = ext->inputEvents_async;
+    ext->inputEvents_async=0;
     MY_LEAVE_CRITICAL();
 
     //Ellenorzes, hogy a loop idozites letelte miatt kell e futtatni a taszkot.
