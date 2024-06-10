@@ -49,7 +49,7 @@ typedef struct
     bool done;
 
     //A led programot hajto engint futtato eroforras vezerlo blokkjara mutat.
-    taskedRsource_control_t* resourceControl;
+    taskedResource_control_t* resourceControl;
 } MyLedPrg_control_t;
 //------------------------------------------------------------------------------
 //LED vezerlo program indulasakor/ujraindulasakor hivodo callback definicioja.

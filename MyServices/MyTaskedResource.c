@@ -129,7 +129,7 @@ static void __attribute__((noreturn)) MyTaskedResource_task(void* taskParam)
         //Vezerlo valtozok, melyeken keresztul adjuk at a fuggevyneknek a
         //kapott esemeny flageket, de ezen keresztul modosithatjak a callbackek
         //a varakozasi idot, vagy irhatjak elo a varakozasra az eventeket.
-        taskedRsource_control_t control;
+        taskedResource_control_t control;
 
         //Start kerelemre varakozik a taszk
         control.waitedEvents=MyTASKEDRESOURCE_EVENT__START_REQUEST;
