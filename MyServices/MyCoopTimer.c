@@ -19,7 +19,7 @@ void MyCoopTimer_createTimer(resource_t* resource, MyCoopTimer_t* timer)
     coopResourceGroup_t* group=
         (coopResourceGroup_t*)((coopResourceExtension_t*)timer->owner)->group;
 
-    //Elobb az eroforrast hozza kell adni egy eroforars csoporthoz, es csak
+    //Elobb az eroforrast hozza kell adni egy eroforras csoporthoz, es csak
     //utana szabad a timert letrehozni, mivel a csoport timer managerere szukseg
     //van!
     ASSERT(group);
@@ -40,7 +40,7 @@ void MyCoopTimer_deleteTimer(resource_t* resource, MyCoopTimer_t* timer)
     coopResourceGroup_t* group=
         (coopResourceGroup_t*)((coopResourceExtension_t*)timer->owner)->group;
 
-    //Elobb az eroforrast hozza kell adni egy eroforars csoporthoz, es csak
+    //Elobb az eroforrast hozza kell adni egy eroforras csoporthoz, es csak
     //utana szabad a timert letrehozni, mivel a csoport timer managerere szukseg
     //van!
     ASSERT(group);

@@ -129,7 +129,7 @@ typedef struct
     //Nem szabad hasznalni az eroforrason belul!
     uint32_t inputEvents_async;
 
-    //Az eroforarst futtato csoportra mutat
+    //Az eroforrast futtato csoportra mutat
     struct coopResourceGroup_t* group;
 
     //Vezerlo valtozok, melyeken keresztul adjuk at a fuggevyneknek a
