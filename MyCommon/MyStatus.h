@@ -32,5 +32,12 @@ enum _generic_status
     kStatus_Busy                = MAKE_STATUS(kStatusGroup_Generic, 7),
 };
 
+//Ha van definialva az applikacioban MY_STATUS_GROUPS_INCLUDE, melyben az
+//alkalmazasra vonatkozo statusz csoportok vannak megadva, akkor azt a file-t
+//behuzza a forrasba.
+#ifdef MY_STATUS_GROUPS_INCLUDE
+#include MY_STATUS_GROUPS_INCLUDE
+#endif
+
 
 #endif 	//MY_STATUS_H_
