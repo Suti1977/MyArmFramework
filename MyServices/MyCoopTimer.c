@@ -99,7 +99,7 @@ static void MyCoopTimer_expired_cb(void* callbackData)
                             ((coopResourceExtension_t*)timer->owner)->resource);
 
 
-    //Ha van beregisztralva hozza callback, akkro azt i s meghivja
+    //Ha van beregisztralva hozza callback, akkor azt i s meghivja
     if (timer->expiredFunc)
     {
         timer->expiredFunc(timer->callbackData);
