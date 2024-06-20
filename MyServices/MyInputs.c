@@ -198,67 +198,82 @@ static void MyInputs_processInput(MyInput_t* input, uint64_t time)
     {   //Valtozott a bemenet
 
         //A kovetkezo koros valtozas figyeleshez elmenti az allapotot.
-        input->lastState = input->state;
+        //input->lastState = input->state;
 
 
         //Most lett aktivalva a bemenet?
-        if (input->state == input->cfg->activState)
+        if (input->state == input->cfg->activeState)
         {   //ez az aktivalas pillanata.
 
-            //Ha van beregisztralva callback, akkor meghivja
-            if (input->cfg->activatedFunc)
-            {
-                input->cfg->activatedFunc(input->cfg->privData);
-            }
+            if (input->lastState == input->cfg->inactiveState)
+            {   //korabban inaktiv volt a bemenet
 
+                input->active=true;
 
-            //Valtaskor az elso hosszu gombnyomas leirot alitja be...
-            input->nextLongPress=input->cfg->longPress;
-
-            if ((input->nextLongPress==NULL) ||
-                (input->nextLongPress->time==0))
-            {   //Az adott bemenethez nem tartozik hosszu aktivalasra kezelendo
-                //esemeny.
-                input->nextEventTime=0;
-            } else
-            {   //van beregisztralva esemeny hosszu aktivalasra. Az elso
-                //idopont meghatarozasa.
-                input->nextEventTime= time + input->nextLongPress->time;
-            }
-
-        } else
-        {   //Ez az inaktivalas pillanata.
-
-            //Ha van beregisztralva callback, akkor meghivja
-            if (input->cfg->inactivatedFunc)
-            {
-                input->cfg->inactivatedFunc(input->cfg->privData);
-            }
-
-            //Az elozo (aktivalas ota eltelt ido es a mostani ido
-            //kozotti kulonbseg alapjan, ha az egy adott idonel
-            //rovidebb, akkor rovid aktivalas tortent. Nyomogomb eseten
-            //peldaul rovid gombnyomas.
-
-            //Itt bevezetunk egy minimum idokozt is, melynel viszont
-            //hoszabbnak kell lennie, evvel is miniamlizalva a teves
-            //jelzest.
-            uint64_t delta = time - input->lastEdgeTimeStamp;
-            if ((delta < input->cfg->shortTime) &&
-                (delta >= input->cfg->minTime))
-            {   //Rovid aktivalas a bemeneten.
-                if (input->cfg->shortFunc)
+                //Ha van beregisztralva callback, akkor meghivja
+                if (input->cfg->activatedFunc)
                 {
-                    input->cfg->shortFunc(input->cfg->privData);
+                    input->cfg->activatedFunc(input->cfg->privData);
+                }
+
+
+                //Valtaskor az elso hosszu gombnyomas leirot alitja be...
+                input->nextLongPress=input->cfg->longPress;
+
+                if ((input->nextLongPress==NULL) ||
+                    (input->nextLongPress->time==0))
+                {   //Az adott bemenethez nem tartozik hosszu aktivalasra
+                    //kezelendo esemeny.
+                    input->nextEventTime=0;
+                } else
+                {   //van beregisztralva esemeny hosszu aktivalasra. Az elso
+                    //idopont meghatarozasa.
+                    input->nextEventTime= time + input->nextLongPress->time;
                 }
             }
+        } else
+        {   //Ez az inaktivalas pillanata.
+            if ((input->lastState == input->cfg->activeState) &&
+                (input->active))
+            {   //Korabban aktiv volt a bemenet
 
-            //Az esetleges hosszu aktivalasi esemenyek idoziteset leallitja
-            input->nextEventTime=0;
+                input->active=false;
+
+                //Ha van beregisztralva callback, akkor meghivja
+                if (input->cfg->inactivatedFunc)
+                {
+                    input->cfg->inactivatedFunc(input->cfg->privData);
+                }
+
+                //Az elozo (aktivalas ota eltelt ido es a mostani ido
+                //kozotti kulonbseg alapjan, ha az egy adott idonel
+                //rovidebb, akkor rovid aktivalas tortent. Nyomogomb eseten
+                //peldaul rovid gombnyomas.
+
+                //Itt bevezetunk egy minimum idokozt is, melynel viszont
+                //hoszabbnak kell lennie, evvel is miniamlizalva a teves
+                //jelzest.
+                uint64_t delta = time - input->lastEdgeTimeStamp;
+                if ((delta < input->cfg->shortTime) &&
+                    (delta >= input->cfg->minTime))
+                {   //Rovid aktivalas a bemeneten.
+                    if (input->cfg->shortFunc)
+                    {
+                        input->cfg->shortFunc(input->cfg->privData);
+                    }
+                }
+
+                //Az esetleges hosszu aktivalasi esemenyek idoziteset leallitja
+                input->nextEventTime=0;
+            } //if (input->lastState == input->cfg->activState)
+
         } //if (input->state == input->cfg->activState) else
 
         //bemenet valtozas idopontjanak elmentese.
         input->lastEdgeTimeStamp=time;
+
+        //A kovetkezo koros valtozas figyeleshez elmenti az allapotot.
+        input->lastState = input->state;
 
     } //if (input->lastState != input->state)
     else
