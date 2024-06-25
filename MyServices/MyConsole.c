@@ -161,23 +161,24 @@ void MyConsole_feed(MyConsole_t* console, uint8_t rxByte)
 static void MyConsole_cmdLine_putChar_cb(char c, void* userData)
 {
     MyConsole_t* console=(MyConsole_t*)userData;
-    //A konfiguraciokor a konzolhoz beregisztralt kiiro rutint hivjuk
-    console->sendFunc((const uint8_t*)&c, 1, console->callbackData);
+    MyConsole_putChar(console, c);
 }
 //------------------------------------------------------------------------------
 //0 vegu string kiirasat megvalosito callback funkcio.A parancssori modul hivja.
 static void MyConsole_cmdLine_putString_cb(const char* str, void* userData)
 {
     MyConsole_t* console=(MyConsole_t*)userData;
-    //A konfiguraciokor a konzolhoz beregisztralt kiiro rutint hivjuk
-    console->sendFunc((const uint8_t*)str,
-                       strlen(str),
-                       console->callbackData);
+    MyConsole_putString(console, str);
 }
 //------------------------------------------------------------------------------
 //Konzolra karakter kiirsa
 void MyConsole_putChar(MyConsole_t* console, const char c)
 {
+    if (c == '\n')
+    {   //'\r' (0x0d) kuldese, minden '\n' (0x0a) elott
+        static const char retChar='\r';
+        console->sendFunc((const uint8_t*)&retChar, 1, console->callbackData);
+    }
     //A konfiguraciokor a konzolhoz beregisztralt kiiro rutint hivjuk
     console->sendFunc((const uint8_t*)&c, 1, console->callbackData);
 }
@@ -185,10 +186,44 @@ void MyConsole_putChar(MyConsole_t* console, const char c)
 //Konzolra string kiirsa
 void MyConsole_putString(MyConsole_t* console, const char* str)
 {
-    //A konfiguraciokor a konzolhoz beregisztralt kiiro rutint hivjuk
-    console->sendFunc((const uint8_t*)str,
-                       strlen(str),
-                       console->callbackData);
+    //String kiirasnal keresni kell a stringben a sorvege karaktereket, mert oda
+    //be kell ultetni egy-egy kocsi vissza karaktert is.
+    //A rutin ugy van megoldva, hogy mindaddig, amig nem talál sorvege jelet,
+    //addig egy blokkban adja at a string darabot a kiiro fuggvenynek.
+    uint32_t len=0;
+    const char* p=str;
+    while(*p)
+    {
+        if (*p=='\n')
+        {
+            if (len)
+            {   //Van elotte mar mit kuldeni.
+                console->sendFunc((const uint8_t*)str,
+                                   len,
+                                   console->callbackData);
+                len=0;
+            }
+            static const char crlf[]={0x0d, 0x0a};
+            console->sendFunc((const uint8_t*)crlf,
+                               2,
+                               console->callbackData);
+
+            p++;
+            str=p;
+        } else
+        {
+            p++;
+            len++;
+        }
+    }
+
+    if (len)
+    {   //Van meg hatra, amit ki kell kuldeni. Ez e maradek.
+        console->sendFunc((const uint8_t*)str,
+                           len,
+                           console->callbackData);
+        len=0;
+    }
 }
 //------------------------------------------------------------------------------
 //Konzolra binaris tartalom kiirasa
