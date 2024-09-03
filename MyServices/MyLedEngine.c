@@ -33,11 +33,11 @@
 #define MY_LED_ENGINE_TRACE    0
 
 static status_t MyLedEngine_resourceStart(void* callbackData,
-                                taskedRsource_control_t* control);
+                                taskedResource_control_t* control);
 static status_t MyLedEngine_resourceStop(void* callbackData);
 static void     MyLedEngine_resourceError(void* callbackData, status_t errorCode);
 static status_t MyLedEngine_resourceLoop(void* callbackData,
-                               taskedRsource_control_t* control);
+                               taskedResource_control_t* control);
 static void MyLedEngine_resourceStatusCB( resource_t* resource,
                                         resourceStatus_t resourceStatus,
                                         resourceErrorInfo_t* errorInfo,
@@ -103,7 +103,7 @@ void MyLedEngine_init(MyLedEngine_t* engine, const MyLedEngine_config_t* cfg)
 //------------------------------------------------------------------------------
 //Az eroforras elinditasara, a taszkban meghivodo rutin
 static status_t MyLedEngine_resourceStart(void* callbackData,
-                                        taskedRsource_control_t* control)
+                                        taskedResource_control_t* control)
 {
     (void) control;
     #if MY_LED_ENGINE_TRACE
@@ -193,7 +193,7 @@ static void MyLedEngine_resourceError(void* callbackData, status_t errorCode)
 //------------------------------------------------------------------------------
 //Eroforrast futtato callback
 static status_t MyLedEngine_resourceLoop(void* callbackData,
-                                       taskedRsource_control_t* control)
+                                       taskedResource_control_t* control)
 {
     status_t status=kStatus_Success;
     MyLedEngine_t* engine=(MyLedEngine_t*)callbackData;

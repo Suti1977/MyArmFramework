@@ -34,7 +34,9 @@ typedef struct
     uint32_t id;
 
     //A bemenet aktiv allapota
-    MyInput_sample_t activState;
+    MyInput_sample_t activeState;
+    //A bemenet inaktiv allapota
+    MyInput_sample_t inactiveState;
 
     //bemenetet mintavevo fuggveny
     MyInput_samplingFunc* samplingFunc;
@@ -92,6 +94,9 @@ typedef struct
 
     //Nyomogombhoz tartozo idozites
     MySwTimer_t timer;
+
+    //true, ha a bemenet aktiv (mondjuk nyomva van)
+    bool active;
 
     //lancolt listaban a kovetkezo bemenetre mutat
     struct MyInput_t* next;

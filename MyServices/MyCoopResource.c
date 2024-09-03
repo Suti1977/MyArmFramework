@@ -6,7 +6,7 @@
 #include "MyCoopResource.h"
 #include <string.h>
 
-#define COOP_RESOURCE_TRACING 1
+#define COOP_RESOURCE_TRACING 0
 
 MYSM_STATE(MyCoopResource_sm_waitingForStart);
 MYSM_STATE(MyCoopResource_sm_starting);
@@ -35,9 +35,10 @@ void MyCoopResource_create(resource_t* resource,
 
     //Eroforras allapotgep letrehozasa. A Startra varas allapottal fog indulni.
     MySM_init(&ext->sm, MyCoopResource_sm_waitingForStart, ext);
+
     //mivel az allapotgep futasa esemenyhez van kotve, ezert kezdetben be kell
     //allitani a start esemenyre valo varast.
-    ext->control.waitedEvents=MY_COOP_RESOURCE_EVENT__START_REQUEST;
+    //ext->control.waitedEvents=MY_COOP_RESOURCE_EVENT__START_REQUEST;
 }
 //------------------------------------------------------------------------------
 //Eroforras kiertekelese/futtatasa
@@ -47,15 +48,25 @@ void MyCoopResource_runResource(resource_t* resource)
     coopResourceExtension_t* ext=(coopResourceExtension_t*) resource->ext;
 
     //Eroforrasnak szolo esemenyek atvetele. Kesobb ezeket hasznalja az
-    //allapotgepben.
+    //allapotgepben...
     MY_ENTER_CRITICAL();
-    ext->control.events = ext->inputEvents;
-    ext->inputEvents=0;
+    ext->controlEvents = ext->controlEvents_async;
+    ext->controlEvents_async=0;
+
+    if (ext->controlEvents==0)
+    {   //Nincs olyan esemeny, ami miatt futtatni kell az eroforrast.
+        //(A controlEvents mind a vezerlo, mind pedig a bemeneti esemenyek
+        //eseten is valamelyik bitjen jelez.)
+        MY_LEAVE_CRITICAL();
+        return;
+    }
+
+    ext->control.events = ext->inputEvents_async;
+    ext->inputEvents_async=0;
     MY_LEAVE_CRITICAL();
 
-
-    //Ellenorzes, hogy az idozites letelte miatt kell e futtatni a taszkot.
-    bool loopTimerExpired=MySwTimer_expired(&ext->loopTimer);
+    //Ellenorzes, hogy a loop idozites letelte miatt kell e futtatni a taszkot.
+    bool loopTimerExpired=MyCoopTimer_expired(&ext->loopTimer);
     if (loopTimerExpired)
     {
         //Jelzes az eroforrasnak, hogy az eloirt idozites letelte miatt (is)
@@ -63,12 +74,13 @@ void MyCoopResource_runResource(resource_t* resource)
         ext->control.timed=true;
 
         #if COOP_RESOURCE_TRACING
-        printf("MyCoopResource Timed! (%s)\n", ext->cfg->name);
+        printf("MyCoopResource loop timed! (%s)\n", ext->cfg->name);
         #endif
     }
 
+
     if ((ext->control.events & ext->control.waitedEvents)  ||
-        (ext->control.timed))
+        (ext->control.timed) || (ext->controlEvents))
     {   //Vannak olyan esemenyek, melyekre az eroforrast aktivalni kell.
 
         //A varakozos esemenyeket toroljuk. Azokat majd az allapotgep ujra
@@ -84,8 +96,8 @@ void MyCoopResource_runResource(resource_t* resource)
         ext->control.timed=false;
 
         if (ext->control.waitTime != portMAX_DELAY)
-        {   //Van eloirva idozites!
-            MySwTimer_start(&ext->loopTimer, ext->control.waitTime, 0);
+        {   //Van eloirva idozites a loopra!
+            MyCoopTimer_start(&ext->loopTimer, ext->control.waitTime, 0);
         }
     }
 }
@@ -103,18 +115,18 @@ MYSM_STATE(MyCoopResource_sm_waitingForStart)
         printf("MyCoopResource WAITING FOR START... (%s)\n", this->cfg->name);
         #endif
 
-        //Start kerelemre varakozik a taszk
-        this->control.waitedEvents=MY_COOP_RESOURCE_EVENT__START_REQUEST;
+        this->control.waitedEvents=0;
         this->control.waitTime=portMAX_DELAY;
         this->errorCode=kStatus_Success;
 
         //Ha futna a loop idozites, akkor azt le kell allitani!
-        MySwTimer_stop(&this->loopTimer);
+        MyCoopTimer_stop(&this->loopTimer);
     }
 
-    if (this->control.events & MY_COOP_RESOURCE_EVENT__START_REQUEST)
+    //Start kerelemre varakozik az eroforras
+    if (this->controlEvents & MY_COOP_RESOURCE_EVENT__START_REQUEST)
     {   //Inditasi kerelem erkezett.
-        this->control.events &= ~MY_COOP_RESOURCE_EVENT__START_REQUEST;
+        this->controlEvents &= ~MY_COOP_RESOURCE_EVENT__START_REQUEST;
 
         MYSM_CHANGE_STATE(MyCoopResource_sm_starting);
     }
@@ -228,7 +240,7 @@ MYSM_STATE(MyCoopResource_sm_run)
         if (this->control.waitTime)
         {
             //A tovabbiakban figyelni fogja a leallitasi kerelmet is.
-            this->control.waitedEvents = MY_COOP_RESOURCE_EVENT__STOP_REQUEST;
+            //this->control.waitedEvents = MY_COOP_RESOURCE_EVENT__STOP_REQUEST;
 
             return status;
         }
@@ -248,9 +260,9 @@ MYSM_STATE(MyCoopResource_sm_run)
     }
 
 
-    if (this->control.events & MY_COOP_RESOURCE_EVENT__STOP_REQUEST)
+    if (this->controlEvents & MY_COOP_RESOURCE_EVENT__STOP_REQUEST)
     {   //Leallitasi kerelem erkezett a manager felol.
-        this->control.events &= ~MY_COOP_RESOURCE_EVENT__STOP_REQUEST;
+        this->controlEvents &= ~MY_COOP_RESOURCE_EVENT__STOP_REQUEST;
 
         MYSM_CHANGE_STATE(MyCoopResource_sm_stopping);
     }
@@ -264,7 +276,7 @@ MYSM_STATE(MyCoopResource_sm_run)
     }
 
     //A leallitasi esemenyt barmikor fogadhatjuk ezek utan.
-    this->control.waitedEvents |= MY_COOP_RESOURCE_EVENT__STOP_REQUEST;
+    //this->control.waitedEvents |= MY_COOP_RESOURCE_EVENT__STOP_REQUEST;
     return status;
 
 error:
@@ -281,7 +293,7 @@ MYSM_STATE(MyCoopResource_sm_stopping)
     if (MYSM_STATE_INIT())
     {
         #if COOP_RESOURCE_TRACING
-                printf("MyCoopResource STOPPING... (%s)\n", this->cfg->name);
+        printf("MyCoopResource STOPPING... (%s)\n", this->cfg->name);
         #endif
 
         //Jelzes a loopban futo folyamatnak, hogy leallitasi kerelmet kapott.
@@ -293,7 +305,7 @@ MYSM_STATE(MyCoopResource_sm_stopping)
         //flag (mar) nem tiltja.
 
         #if COOP_RESOURCE_TRACING
-            printf("MyCoopResource STOP. (%s)\n", this->cfg->name);
+        printf("MyCoopResource STOP. (%s)\n", this->cfg->name);
         #endif
 
         if (this->cfg->stopFunc)
@@ -333,7 +345,7 @@ MYSM_STATE(MyCoopResource_sm_error)
     if (MYSM_STATE_INIT())
     {
         #if COOP_RESOURCE_TRACING
-            printf("MyCoopResource ERROR! (%s)\n", this->cfg->name);
+        printf("MyCoopResource ERROR! (%s)\n", this->cfg->name);
         #endif
 
         if (this->cfg->errorFunc)
@@ -347,18 +359,18 @@ MYSM_STATE(MyCoopResource_sm_error)
         //A hiba eseten csak a leallitasi kerelmet fogadjuk a manager felol.
         this->control.waitedEvents=MY_COOP_RESOURCE_EVENT__STOP_REQUEST;
         //Ha futna a loop timer, akkor azt le kell allitani
-        MySwTimer_stop(&this->loopTimer);
+        MyCoopTimer_stop(&this->loopTimer);
     }
 
 
     //Varakozas arra, hogy az eroforras leallitasi kerest kapjon a managertol.
     //(Ez szukseges, hogy torlodjon benne a hiba.)
-    if (this->control.events & MY_COOP_RESOURCE_EVENT__STOP_REQUEST)
+    if (this->controlEvents & MY_COOP_RESOURCE_EVENT__STOP_REQUEST)
     {   //Leallitasi kerelem erkezett a manager felol.
-        this->control.events &= ~MY_COOP_RESOURCE_EVENT__STOP_REQUEST;
+        this->controlEvents &= ~MY_COOP_RESOURCE_EVENT__STOP_REQUEST;
 
         #if COOP_RESOURCE_TRACING
-            printf("MyCoopResource Error cleared! (%s)\n", this->cfg->name);
+        printf("MyCoopResource Error cleared! (%s)\n", this->cfg->name);
         #endif
 
         //Jelzes a manager fele, hogy az eroforras leallt.
@@ -371,4 +383,17 @@ MYSM_STATE(MyCoopResource_sm_error)
     return status;
 }
 //------------------------------------------------------------------------------
+//Kooperativ eroforrasnak esemeny kuldese
+void MyCoopResource_setEvent(resource_t* resource, uint32_t event)
+{
+    MyCoopResourceGroup_setResourceEvent(resource, event);
+}
 //------------------------------------------------------------------------------
+//Kooperativ eroforrasnak esemeny kuldese megszakitasbol
+void MyCoopResource_setEventFromIsr(resource_t* resource, uint32_t event)
+{
+    MyCoopResourceGroup_setResourceEventFromIsr(resource, event);
+}
+//------------------------------------------------------------------------------
+
+

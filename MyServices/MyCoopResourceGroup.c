@@ -5,17 +5,17 @@
 //------------------------------------------------------------------------------
 #include "MyCoopResourceGroup.h"
 #include "MyCoopResource.h"
+//#include "MyCoopTimer.h"
 #include <string.h>
 
-static void __attribute__((noreturn)) MyCoopResourceGroup_task(void* taskParam);
-static void MyCoopResourceGroup_resourceEvent(coopResourceExtension_t* ext,
-                                              uint32_t events);
+#define MY_COOP_RESOURCE_GROUP_TRACE    0
 
+static void __attribute__((noreturn)) MyCoopResourceGroup_task(void* taskParam);
 static status_t MyCoopResourceGroup_resource_init(void* param);
 static status_t MyCoopResourceGroup_resource_start(void* param);
 static status_t MyCoopResourceGroup_resource_stop(void* param);
 
-#define COOP_RESOURCE_GROUP_EVENET__RUN_REQUEST  BIT(0)
+#define COOP_RESOURCE_GROUP_EVENET__RUN_REQUEST  BIT(1)
 //------------------------------------------------------------------------------
 //Eroforrasok csoportjat futtato modul letrehozasa es inicializalasa
 void MyCoopResourceGroup_create(coopResourceGroup_t* group,
@@ -97,10 +97,10 @@ void MyCoopResourceGroup_add(coopResourceGroup_t* group,
     group->lastResource=resource;
 
     //Az eroforrashoz megjegyzi a hozza tartozo csoportot is.
-    ext->group=(struct resourceGroup_t*) group;
+    ext->group=(struct coopResourceGroup_t*) group;
 
     //Az loop idozito hozzaadasa az idozites managerhez...
-    MySwTimer_addTimer(&group->timerManager, &ext->loopTimer);
+    MyCoopTimer_createTimer(resource, &ext->loopTimer);
 
     xSemaphoreGive(group->mutex);
 }
@@ -112,6 +112,10 @@ static status_t MyCoopResourceGroup_resource_init(void* param)
     status_t status=kStatus_Success;
     resource_t* resource=(resource_t*) param;
     coopResourceExtension_t* ext=(coopResourceExtension_t*) resource->ext;
+
+    #if MY_COOP_RESOURCE_GROUP_TRACE
+    printf("MyCoopResourceGroup_resource_init()\n");
+    #endif
 
     if (ext->cfg->initFunc)
     {   //init funkcio meghivasa, mivel van ilyen beallitva
@@ -131,12 +135,17 @@ static status_t MyCoopResourceGroup_resource_start(void* param)
     resource_t* resource=(resource_t*) param;
     coopResourceExtension_t* ext=(coopResourceExtension_t*) resource->ext;
 
+    #if MY_COOP_RESOURCE_GROUP_TRACE
+    printf("MyCoopResourceGroup_resource_start()\n");
+    #endif
+
     if (ext->cfg->startRequestFunc)
     {   //Inditasi kerelem funkcio meghivasa, mivel van ilyen beallitva
         ext->cfg->startRequestFunc(ext->cfg->callbackData);
     }
 
-    MyCoopResourceGroup_resourceEvent(ext, MY_COOP_RESOURCE_EVENT__START_REQUEST);
+    MyCoopResourceGroup_setResourceControlEvent(resource,
+                                         MY_COOP_RESOURCE_EVENT__START_REQUEST);
 
     return status;
 }
@@ -149,12 +158,18 @@ static status_t MyCoopResourceGroup_resource_stop(void* param)
     resource_t* resource=(resource_t*) param;
     coopResourceExtension_t* ext=(coopResourceExtension_t*) resource->ext;
 
+    #if MY_COOP_RESOURCE_GROUP_TRACE
+    printf("MyCoopResourceGroup_resource_stop()\n");
+    #endif
+
+
     if (ext->cfg->stopRequestFunc)
     {   //Lealitasi kerelem funkcio meghivasa, mivel van ilyen beallitva
         ext->cfg->stopRequestFunc(ext->cfg->callbackData);
     }
 
-    MyCoopResourceGroup_resourceEvent(ext, MY_COOP_RESOURCE_EVENT__STOP_REQUEST);
+    MyCoopResourceGroup_setResourceControlEvent(resource,
+                                         MY_COOP_RESOURCE_EVENT__STOP_REQUEST);
 
     return status;
 }
@@ -176,15 +191,17 @@ static void __attribute__((noreturn)) MyCoopResourceGroup_task(void* taskParam)
     while(1)
     {
         //Varakozas esemenyre, vagy idozitesre...
-        uint32_t events;
-        xTaskNotifyWait(0, 0xffffffff, &events, waitTime);
+        uint32_t events;        
 
-        printf("__RUN GROUP__\n");
+        xTaskNotifyWait(0, 0xff, &events, waitTime);
 
         //TimerManager futtatasa...
+        //A futtatas kozben a lejart eroforras idozitokhoz tartozo expired
+        //callback meghivodik, es az egyes eroforrasokhoz beallitasra kerul
+        //a kiszolgalast kerelmezo esemeny.
         MySwTimer_runManager(&this->timerManager, MyRTOS_getTick());
-        //eroforrasok futtatasa...
-        //TODO: kesobb megoldani olyanra, hogy csak a relevansokon fusson!
+
+        //eroforrasok futtatasa
         resource_t* resource=this->resources;
         while(resource)
         {
@@ -203,18 +220,72 @@ static void __attribute__((noreturn)) MyCoopResourceGroup_task(void* taskParam)
     }
 }
 //------------------------------------------------------------------------------
-static void MyCoopResourceGroup_resourceEvent(coopResourceExtension_t* ext,
+//Kooperativ eroforrashoz tartozo esemeny beallitasa
+void MyCoopResourceGroup_setResourceEvent(resource_t* resources,
                                           uint32_t events)
 {
+    coopResourceExtension_t* ext=(coopResourceExtension_t*)resources->ext;
+    coopResourceGroup_t* group=(coopResourceGroup_t*)ext->group;
+
     //Esemeny hozzaadasa
     MY_ENTER_CRITICAL();
-    ext->inputEvents |= events;
+    ext->inputEvents_async |= events;
+    ext->controlEvents_async |= MY_COOP_RESOURCE_EVENT__INPUT_EVENT;
     MY_LEAVE_CRITICAL();
 
     //Eroforrasokat futtato csoportos szal ebresztese
-    xTaskNotify(((coopResourceGroup_t*)ext->group)->taskHandle,
+    xTaskNotify(group->taskHandle,
                 COOP_RESOURCE_GROUP_EVENET__RUN_REQUEST,
                 eSetBits);
 }
 //------------------------------------------------------------------------------
+//Kooperativ eroforrashoz tartozo esemeny beallitasa megszakitsbol
+void MyCoopResourceGroup_setResourceEventFromIsr(resource_t* resources,
+                                                 uint32_t events)
+{
+    coopResourceExtension_t* ext=(coopResourceExtension_t*)resources->ext;
+    coopResourceGroup_t* group=(coopResourceGroup_t*)ext->group;
+
+    //Esemeny hozzaadasa
+    ext->inputEvents_async |= events;
+    ext->controlEvents_async |= MY_COOP_RESOURCE_EVENT__INPUT_EVENT;
+
+    //Eroforrasokat futtato csoportos szal ebresztese...
+
+    BaseType_t higherPriorityTaskWoken=pdFALSE;
+    xTaskNotifyFromISR(group->taskHandle,
+                       events,
+                       eSetBits,
+                       &higherPriorityTaskWoken);
+    portYIELD_FROM_ISR(higherPriorityTaskWoken);
+}
+//------------------------------------------------------------------------------
+//Kooperativ eroforrashoz tartozo vezerlo esemeny beallitasa
+void MyCoopResourceGroup_setResourceControlEvent(resource_t* resources,
+                                                 uint32_t events)
+{
+    coopResourceExtension_t* ext=(coopResourceExtension_t*)resources->ext;
+    coopResourceGroup_t* group=(coopResourceGroup_t*)ext->group;
+
+    //Esemeny hozzaadasa
+    MY_ENTER_CRITICAL();
+    ext->controlEvents_async |= events;
+    MY_LEAVE_CRITICAL();
+
+    //Eroforrasokat futtato csoportos szal ebresztese
+    xTaskNotify(group->taskHandle,
+                COOP_RESOURCE_GROUP_EVENET__RUN_REQUEST,
+                eSetBits);
+}
+//------------------------------------------------------------------------------
+//Kooperativ eroforrashoz tartozo idozites letelt esemeny beallitasa. A timer
+//manager alol hivodik.
+void MyCoopResourceGroup_setResourceTimerExpired(resource_t* resources)
+{
+    coopResourceExtension_t* ext=(coopResourceExtension_t*)resources->ext;
+    coopResourceGroup_t* group=(coopResourceGroup_t*)ext->group;
+
+    //Esemeny hozzaadasa
+    ext->controlEvents_async |= MY_COOP_RESOURCE_EVENT__TIMER_EXPIRED;
+}
 //------------------------------------------------------------------------------

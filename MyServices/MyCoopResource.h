@@ -8,8 +8,13 @@
 
 #include "MyRM.h"
 #include "MySM.h"
-#include "MySwTimer.h"
+#include "MyCoopTimer.h"
+#include "MyCoopResourceGroup.h"
 
+//Eroforras esemenyt kapott, mely miatt azt futtatni kell
+#define MY_COOP_RESOURCE_EVENT__INPUT_EVENT     BIT(28)
+//Eroforrashoz rendelt valamelyik timer lejart, futtatni kell az eroforrast
+#define MY_COOP_RESOURCE_EVENT__TIMER_EXPIRED   BIT(29)
 //Eroforras inditasat eloiro esemeny flag
 #define MY_COOP_RESOURCE_EVENT__START_REQUEST   BIT(30)
 //Eroforras leallitasat kero esemeny flag
@@ -18,7 +23,7 @@
 //Az eroforrast vezerlo valtozok halmaza
 typedef struct
 {
-    //A taszknak kuldott eventek
+    //Az eroforrasnak kuldott eventek
     EventBits_t events;
 
     //true, ha a loop azert fut, mert az applikacio altal megadott idozites
@@ -119,18 +124,26 @@ typedef struct
     //Csoport lancolt listajaban a kovetkezo elemet cimzo pointer
     resource_t* next;
 
-    //Az eroforrashoz tartozo vezerlo esemeny flagek
+    //Az eroforrashoz tartozo kulso esemeny flagek
     //Ez kerul masoloasra a control strukturaba futtataskor.
     //Nem szabad hasznalni az eroforrason belul!
-    uint32_t inputEvents;
+    uint32_t inputEvents_async;
 
-    //Az eroforarst futtato csoportra mutat
-    struct resourceGroup_t* group;
+    //Az eroforrast futtato csoportra mutat
+    struct coopResourceGroup_t* group;
 
     //Vezerlo valtozok, melyeken keresztul adjuk at a fuggevyneknek a
     //kapott esemeny flageket, de ezen keresztul modosithatjak a callbackek
     //a varakozasi idot, vagy irhatjak elo a varakozasra az eventeket.
     coopResource_control_t control;
+
+    //Az eroforrashoz beallitott vezerlo esemenyek. Ezek kerulnek atmasolasra
+    //a controlEvents mezokbe, az eroforras futtatasakor.
+    //Nem szabad hasznalni az eroforrason belul!
+    uint32_t controlEvents_async;
+
+    //Az eroforrasnak kuldott vezerlo esemenyek (controlEvents_async alapjan)
+    EventBits_t controlEvents;
 
     //Eroforras futtatas allapotgepe
     MySM_t sm;
@@ -138,7 +151,7 @@ typedef struct
     //Loopot idozito timer. (Az eroforras  csoporthoz valo hozzaadaskor kerul
     //beallitasra, es a kooperativ eroforras csoport managerehez
     //beregisztralasra.)
-    MySwTimer_t loopTimer;
+    MyCoopTimer_t loopTimer;
 
     //Utolso hibakod
     status_t errorCode;
@@ -146,12 +159,25 @@ typedef struct
 //------------------------------------------------------------------------------
 //Taszkal tamogatott eroforras letrehozasa
 void MyCoopResource_create(resource_t* resource,
-                             coopResourceExtension_t* ext,
-                             const coopResource_config_t* cfg);
+                           coopResourceExtension_t* ext,
+                           const coopResource_config_t* cfg);
 
 //Eroforras kiertekelese/futtatasa
 //[Csoport taszkjabol hiva]
 void MyCoopResource_runResource(resource_t* resource);
+
+//A kooperativ eroforrashoz tartozo taszk handlerenek lekerdezese
+static inline
+TaskHandle_t MyCoopResource_getTaskHandler(resource_t* resource)
+{
+    return ((coopResourceGroup_t*)((coopResourceExtension_t*)resource->ext)->group)->taskHandle;
+}
+
+//Kooperativ eroforrasnak esemeny kuldese
+void MyCoopResource_setEvent(resource_t* resource, uint32_t event);
+
+//Kooperativ eroforrasnak esemeny kuldese megszakitasbol
+void MyCoopResource_setEventFromIsr(resource_t* resource, uint32_t event);
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 #endif //MYCOOPRESOURCE_H_

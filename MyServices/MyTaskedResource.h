@@ -60,7 +60,7 @@ typedef struct
     //Az aktualis tick ido. CSAK A LOOP callbackben hasznalhato!!!!
     uint64_t time;
 
-} taskedRsource_control_t;
+} taskedResource_control_t;
 //------------------------------------------------------------------------------
 //Az eroforras inicializalasakor meghivodo callback definicioja
 typedef status_t taskedResourceInitFunc_t(void* callbackData);
@@ -70,14 +70,14 @@ typedef void taskedResourceStartReqFunc_t(void* callbackData);
 typedef void taskedResourceStopReqFunc_t(void* callbackData);
 //Az eroforras elinditasara, a taszkban meghivodo rutin
 typedef status_t taskedResourceStartFunc_t(void* callbackData,
-                                              taskedRsource_control_t* control);
+                                           taskedResource_control_t* control);
 //Az eroforras leallitasi kerelme utan a taszkban meghivodo rutin
 typedef status_t taskedResourceStopFunc_t(void* callbackData);
 //Hiba eseten, a taszkbol hivott callback definicioja
 typedef void taskedResourceErrorFunc_t(void* callbackData, status_t errorCode);
 //Eroforrast futtato callback definicioja
 typedef status_t taskedResourceLoopFunc_t(void* callbackData,
-                                          taskedRsource_control_t* control);
+                                          taskedResource_control_t* control);
 //------------------------------------------------------------------------------
 //Taszkal rendelkezo eroforras inicializalasanal hasznalt struktura.
 typedef struct
