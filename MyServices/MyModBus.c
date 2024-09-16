@@ -11,7 +11,7 @@
 #include "MyModBus.h"
 #include <string.h>
 
-#define MYMODBUS_TRACE 1
+//#define MYMODBUS_TRACE 0
 #ifdef MYMODBUS_TRACE
 #include "MyDump.h"
 #endif
