@@ -31,6 +31,7 @@ void MyModBus_init(MyModBus_t* this, const MyModbus_config_t* cfg)
     this->rxTimeout=cfg->rxTimeout;
     this->sendFunc=cfg->sendFunc;
     this->callbackData=cfg->callbackData;
+    this->indicatorFunc=cfg->indicatorFunc;
     this->regCallbackData=cfg->regCallbackData;
 
     //Ha nem broadcast (0) a cim, akkor arra beallitja a cimet.
@@ -195,6 +196,8 @@ void MyModBus_rxTimeout(MyModBus_t* this)
             return;
         }
 
+        //Indikator callback meghivasa. Pl LED villantas.
+        if (this->indicatorFunc) this->indicatorFunc(this->callbackData);
 
         //Az uzenet ok.
         //Funkciokod alapjan tovabbi uzenet feldolgozas

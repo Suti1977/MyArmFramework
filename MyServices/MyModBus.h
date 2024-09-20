@@ -69,6 +69,10 @@ typedef status_t MyModBus_periperalsInit_t(bool deinit, void* callbackData);
 typedef status_t MyModBus_sendFunc_t(const uint8_t* msg,
                                      uint32_t msgLen,
                                      void* callbackData);
+
+//Indikator funcjio, mely akkor hivodik, ha egy uzenet neki szol.
+//LED villantasra hasznalhato
+typedef void MyModBus_indicatorFunc_t(void* callbackData);
 //------------------------------------------------------------------------------
 #pragma pack(1)
 //------------------------------------------------------------------------------
@@ -301,6 +305,9 @@ typedef struct
     //Soros porton adatok kuldeset biztosito callback
     MyModBus_sendFunc_t* sendFunc;
 
+    //Akkor hivodo callback, ha egy uzenet neki szol
+    MyModBus_indicatorFunc_t* indicatorFunc;
+
     //A Callbackek szamara atadott tetszolesges valtozo (user_data)
     void* callbackData;
 } MyModbus_config_t;
@@ -344,6 +351,10 @@ typedef struct
 
     //Soros porton adatok kuldeset biztosito callback
     MyModBus_sendFunc_t* sendFunc;
+
+    //Akkor hivodo callback, ha egy uzenet neki szol
+    MyModBus_indicatorFunc_t* indicatorFunc;
+
     //A Callbackek szamara atadott tetszolesges valtozo (user_data)
     void* callbackData;
 } MyModBus_t;
