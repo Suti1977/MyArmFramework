@@ -130,7 +130,7 @@ static void __attribute__((noreturn)) MyInputs_task(void* taskParam)
             //Mintavett allapot magas szintu kiertekelese
             MyInputs_processInput(input, time);
 
-            //Az osszes bemenetre nezve a kovetkezo oylan idopont, amikor
+            //Az osszes bemenetre nezve a kovetkezo olyan idopont, amikor
             //kell valamit tenni. A legnagyobb alapjan.
             if (input->nextEventTime > nextEventTime)
             {
