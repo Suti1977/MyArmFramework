@@ -67,7 +67,7 @@ void MyInputs_addInput(MyInputs_manager_t* manager, MyInput_t* input)
         manager->firstInput=input;
     } else
     {   //Mar van a listanak eleme. Az utolso utan fuzzuk.
-        ((MyInput_t*)manager->lastInput)->next = (struct MyInput_t*) input;
+        ((MyInput_t*)manager->lastInput)->next = input;
     }
     //A sort lezarjuk. Ez lesz az utolso.
     input->next=NULL;

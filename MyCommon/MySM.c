@@ -21,7 +21,7 @@
 #include "MySM.h"
 #include <string.h>
 
-static status_t MySM_dummyState(struct MySM_t* sm);
+static status_t MySM_dummyState(MySM_t* sm);
 //------------------------------------------------------------------------------
 //Allapotgep kezdeti inicializalasa
 void MySM_init(MySM_t* sm, MySM_stateFunc_t* initialState, void* userData)
@@ -49,7 +49,7 @@ void MySM_init(MySM_t* sm, MySM_stateFunc_t* initialState, void* userData)
 //------------------------------------------------------------------------------
 //Alapertelmezett allapot. Akkor hivja meg, ha nincs beallitva kovetkezo
 //allapothoz fuggveny (NULL)
-static status_t MySM_dummyState(struct MySM_t* sm)
+static status_t MySM_dummyState(MySM_t* sm)
 {
     (void) sm;
     return kStatus_Success;
@@ -91,7 +91,7 @@ status_t MySM_run(MySM_t* sm)
         //meghivasa, ha az definialt.
         if (sm->alwaysRunFunc)
         {
-            status=sm->alwaysRunFunc((struct MySM_t*) sm);
+            status=sm->alwaysRunFunc((MySM_t*) sm);
             //Hiba eseten kilepes a hibakoddal
             if (status) break;
         }
@@ -110,7 +110,7 @@ status_t MySM_run(MySM_t* sm)
                 //meghivja
                 if (sm->exitFunc)
                 {
-                    status=sm->exitFunc((struct MySM_t*) sm);
+                    status=sm->exitFunc((MySM_t*) sm);
                 }
 
                 //Jelezni fogjuk az uj allapotnak, hogy ha kell inicializaljon,
@@ -134,7 +134,7 @@ status_t MySM_run(MySM_t* sm)
 
 
         //Allapothoz tartozo funkcio meghivsa...
-        status=sm->state((struct MySM_t*) sm);
+        status=sm->state((MySM_t*) sm);
 
         //Korabban beallitott init jelzes torlese.
         sm->init=false;
@@ -154,7 +154,7 @@ status_t MySM_run(MySM_t* sm)
             //Ha van kilepesi fuggeveny, akkor azt meghivja
             if (sm->exitFunc)
             {
-                status=sm->exitFunc((struct MySM_t*) sm);
+                status=sm->exitFunc((MySM_t*) sm);
                 //A kilepesi fuggevnyt toroljuk.
                 sm->exitFunc=NULL;
             }

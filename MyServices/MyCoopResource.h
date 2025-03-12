@@ -19,6 +19,8 @@
 #define MY_COOP_RESOURCE_EVENT__START_REQUEST   BIT(30)
 //Eroforras leallitasat kero esemeny flag
 #define MY_COOP_RESOURCE_EVENT__STOP_REQUEST    BIT(31)
+
+typedef struct coopResourceExtension coopResourceExtension_t;
 //------------------------------------------------------------------------------
 //Az eroforrast vezerlo valtozok halmaza
 typedef struct
@@ -113,7 +115,7 @@ typedef struct
 } coopResource_config_t;
 //------------------------------------------------------------------------------
 //Eroforras bovitmeny valtozoi.
-typedef struct
+struct coopResourceExtension
 {
     //letrehozaskor kapott konfiguracio
     const coopResource_config_t* cfg;
@@ -130,7 +132,7 @@ typedef struct
     uint32_t inputEvents_async;
 
     //Az eroforrast futtato csoportra mutat
-    struct coopResourceGroup_t* group;
+    coopResourceGroup_t* group;
 
     //Vezerlo valtozok, melyeken keresztul adjuk at a fuggevyneknek a
     //kapott esemeny flageket, de ezen keresztul modosithatjak a callbackek
@@ -155,7 +157,7 @@ typedef struct
 
     //Utolso hibakod
     status_t errorCode;
-} coopResourceExtension_t;
+};
 //------------------------------------------------------------------------------
 //Taszkal tamogatott eroforras letrehozasa
 void MyCoopResource_create(resource_t* resource,

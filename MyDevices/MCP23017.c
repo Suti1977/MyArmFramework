@@ -107,7 +107,7 @@ status_t MCP23017_readPort8(MCP23017_t* dev, uint8_t portID, uint8_t* data)
 }
 //------------------------------------------------------------------------------
 //16 bitesen portok olvasasa (A es B portok egyutt)
-status_t MCP23017_readPort16(MCP23017_t* dev, uint8_t portID, uint16_t* data)
+status_t MCP23017_readPort16(MCP23017_t* dev, uint16_t* data)
 {
     return MCP23017_writeMultipleRegs(dev,
                                       MCP23017_REG_GPIO_A,
@@ -254,8 +254,8 @@ status_t MCP23017_setPinMode(MCP23017_t* dev,
                              bool initialState)
 {
     status_t status;
-    uint8_t regValue;
-    uint8_t regAddr;
+    //uint8_t regValue;
+    //uint8_t regAddr;
     uint8_t mask;
     uint8_t portId;
 

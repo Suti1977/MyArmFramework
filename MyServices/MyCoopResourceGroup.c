@@ -97,7 +97,7 @@ void MyCoopResourceGroup_add(coopResourceGroup_t* group,
     group->lastResource=resource;
 
     //Az eroforrashoz megjegyzi a hozza tartozo csoportot is.
-    ext->group=(struct coopResourceGroup_t*) group;
+    ext->group= group;
 
     //Az loop idozito hozzaadasa az idozites managerhez...
     MyCoopTimer_createTimer(resource, &ext->loopTimer);
@@ -283,7 +283,7 @@ void MyCoopResourceGroup_setResourceControlEvent(resource_t* resources,
 void MyCoopResourceGroup_setResourceTimerExpired(resource_t* resources)
 {
     coopResourceExtension_t* ext=(coopResourceExtension_t*)resources->ext;
-    coopResourceGroup_t* group=(coopResourceGroup_t*)ext->group;
+    //coopResourceGroup_t* group=(coopResourceGroup_t*)ext->group;
 
     //Esemeny hozzaadasa
     ext->controlEvents_async |= MY_COOP_RESOURCE_EVENT__TIMER_EXPIRED;

@@ -12,6 +12,7 @@
 #ifndef MyInput_sample_t
 typedef uint32_t MyInput_sample_t;
 #endif
+typedef struct MyInput MyInput_t;
 //-----------------------------------------------------------------------------
 //A bement kezelo altal hivhato callback funkciok definicioja
 typedef void MyInput_func_t(void* privData);
@@ -66,7 +67,7 @@ typedef struct
 } MyInput_config_t;
 //------------------------------------------------------------------------------
 //Egyetlen bemenet valtozoit leiro struktura.
-typedef struct
+struct MyInput
 {
     //A bemenet kezeles konfiguracioja
     const MyInput_config_t* cfg;
@@ -99,8 +100,8 @@ typedef struct
     bool active;
 
     //lancolt listaban a kovetkezo bemenetre mutat
-    struct MyInput_t* next;
-} MyInput_t;
+    MyInput_t* next;
+};
 //------------------------------------------------------------------------------
 //Bement kezelo valtozoi
 typedef struct

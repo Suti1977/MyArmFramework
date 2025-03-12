@@ -10,17 +10,15 @@
 #include "MyCmdLine.h"
 #include "MyFIFO.h"
 
-struct MyConsole_t;
+typedef struct MyConsole MyConsole_t;
 //------------------------------------------------------------------------------
 //Olyan callback, melyben a kommunikacios periferiat (pl uart) inicializalni kell
 typedef
-status_t MyConsoleinitPeripheriaFunc_t(struct MyConsole_t* console,
-                                       void* userData);
+status_t MyConsoleinitPeripheriaFunc_t(MyConsole_t* console, void* userData);
 
 //Alacsony fogyasztasu modba menet elotti periferia deinit callback
 typedef
-status_t MyConsoledeinitPeripheriaFunc_t(struct MyConsole_t* console,
-                                         void* userData);
+status_t MyConsoledeinitPeripheriaFunc_t(MyConsole_t* console, void* userData);
 
 //A periferiara torteno adatkuldest megvalosito callback funkcio.
 //A fuggevny addig nem terhet vissza, amig a periferian ki nem mentek az adatok.
@@ -47,7 +45,7 @@ typedef struct
     uint32_t    lineBufferSize;
 
     //A parancsertelmezohoz tartozo parancs tablazatra mutat
-    const struct MyCmdLine_CmdTable_t* cmdTable;
+    const MyCmdLine_CmdTable_t* cmdTable;
 
     //A konzolnak a neve. Ilyen neven jon letre hozza tasz, vagy ilyen neven
     //hivatkozunk ra a logban
@@ -66,7 +64,7 @@ typedef struct
 } MyConsole_Config_t;
 //------------------------------------------------------------------------------
 //MyConsole valtozoi
-typedef struct
+struct MyConsole
 {
     //A konzolnak a neve. Ilyen neven jon letre hozza tasz, vagy ilyen neven
     //hivatkozunk ra a logban
@@ -97,7 +95,7 @@ typedef struct
     //A konzolt futtato taszk handlere
     TaskHandle_t    taskHandler;
   #endif //USE_FREERTOS
-} MyConsole_t;
+};
 //------------------------------------------------------------------------------
 //Konzol kezdeti inicializalasa
 status_t MyConsole_init(MyConsole_t* console, const MyConsole_Config_t* cfg);

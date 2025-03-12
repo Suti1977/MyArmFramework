@@ -13,6 +13,8 @@
 #define MY_CMDLINE_MAX_ARGUMENTS_COUNT     8
 #endif
 
+typedef struct MyCmdLine_CmdTable MyCmdLine_CmdTable_t;
+
 //------------------------------------------------------------------------------
 //karakter kiirasat megvalosito callback funkcio prototipusa
 typedef void MyCmdLine_putCharFunc_t(char c, void* userData);
@@ -56,7 +58,7 @@ typedef struct
     //Prompt eseten kiirando string
     const char* promptString;
     //A parancsertelmezohoz tartozo parancs tablazatra mutat
-    const struct MyCmdLine_CmdTable_t* cmdTable;
+    const MyCmdLine_CmdTable_t* cmdTable;
 }MyCmdLine_Config_t;
 //------------------------------------------------------------------------------
 //Cmd valtozoi
@@ -91,7 +93,7 @@ typedef struct
 typedef void MyCmdLine_Func_t(MyCmdLine_t* cmd);
 //------------------------------------------------------------------------------
 //Parancseretlmezo altal ismert parancstablazaton beluli bejegyzesek felepitese
-typedef struct
+struct MyCmdLine_CmdTable
 {
     //Parancs string
     const char* cmdStr;
@@ -101,7 +103,7 @@ typedef struct
     uint8_t maxArgumentsCount;
     //A parancshoz tartozo callback rutin, mely egyezeskor meghivasra kerul
     MyCmdLine_Func_t* cmdFunc;
-} MyCmdLine_CmdTable_t;
+};
 //------------------------------------------------------------------------------
 //Nehany karakter ascci kodjanak definialasa
 #define CHAR_SPACE 			(char)' '

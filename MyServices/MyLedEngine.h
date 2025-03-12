@@ -7,6 +7,8 @@
 #define MYLEDENGINE_H_
 
 #include "MyTaskedResource.h"
+
+typedef struct MyLedEngine MyLedEngine_t;
 //------------------------------------------------------------------------------
 //MyLedEngine hasznalatbavetelekor hivodo callback definicioja. Ebben kell a
 //hasznalt eroforrasok igenyleset elkezdeni.
@@ -75,7 +77,7 @@ typedef struct
     bool restartable;
 
     //A programhot futtato Engin leirojara mutat
-    struct MyLedEngine_t* engine;
+    MyLedEngine_t* engine;
 
     //LED vezerlo program indulasakor/ujraindulasakor hivodo callback
     MyLedPrg_initFunc_t* initFunc;
@@ -100,7 +102,7 @@ typedef struct
 } MyLedPrg_t;
 //------------------------------------------------------------------------------
 //MyLedEngine valtozoi
-typedef struct
+struct MyLedEngine
 {    
     //A modult, mint eroforrast kezelni kepes valtozok halmaza
     resource_t resource;
@@ -145,7 +147,7 @@ typedef struct
     //A loop funcio altal eloirt kovetkezo futtatasi idopont
     uint64_t nextExecutionTime;
 
-} MyLedEngine_t;
+};
 //------------------------------------------------------------------------------
 typedef struct
 {

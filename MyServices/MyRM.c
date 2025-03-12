@@ -25,7 +25,7 @@ static inline void MyRM_addDependencyToResource(resource_t* resource,
                                                 resourceDep_t* dep);
 static void MyRM_sendStatus(resource_t* resource,
                             resourceStatus_t resourceStatus);
-static void MyRM_dependencyStatusCB(struct resourceDep_t *dep,
+static void MyRM_dependencyStatusCB(resourceDep_t *dep,
                                     resourceStatus_t status,
                                     resourceErrorInfo_t* errorInfo);
 static inline void MyRM_sendNotify(MyRM_t* rm, uint32_t eventBits);
@@ -35,7 +35,7 @@ static void MyRM_stopDependency(resourceDep_t* dep);
 static void MyRM_resourceStatusCore(resource_t* resource,
                                     resourceStatus_t resourceStatus,
                                     status_t errorCode);
-static void MyRM_user_resourceStatusCB(struct resourceDep_t* dep,
+static void MyRM_user_resourceStatusCB(resourceDep_t* dep,
                                        resourceStatus_t status,
                                        resourceErrorInfo_t* errorInfo);
 static void MyRM_restartDo(resourceUser_t* user);
@@ -275,7 +275,7 @@ static inline void MyRM_addRequesterToResource(resource_t* resource,
         dep->nextRequester=NULL;
     } else
     {   //Mar van a listanak eleme. Az utolso utan fuzzuk.
-        resource->requesterList.last->nextRequester=(struct resourceDep_t*)dep;
+        resource->requesterList.last->nextRequester=dep;
     }
     //A sort lezarjuk. Ez lesz az utolso.
     dep->nextRequester=NULL;
@@ -288,7 +288,7 @@ static inline void MyRM_addDependencyToResource(resource_t* resource,
 {
     //A leiroban beallitjuk az eroforrast, akihez tartozik, akinek a fuggoseget
     //leirjuk.
-    dep->requesterResource=(struct resource_t*) resource;                       //<-----------void?
+    dep->requesterResource=resource;                       //<-----------void?
 
     //Az eroforras lancolt listajahoz adjuk a fuggosegi leirot...
     if (resource->dependencyList.first==NULL)
@@ -297,7 +297,7 @@ static inline void MyRM_addDependencyToResource(resource_t* resource,
         //Dep->PrevDependency=NULL;
     } else
     {   //Mar van a listanak eleme. Az utolso utan fuzzuk.
-        resource->dependencyList.last->nextDependency=(struct resourceDep_t*)dep;
+        resource->dependencyList.last->nextDependency=dep;
     }
     //A sort lezarjuk. Ez lesz az utolso.
     dep->nextDependency=NULL;
@@ -323,8 +323,8 @@ void MyRM_addDependency(resourceDep_t* dep,
     MyRM_LOCK(rm->mutex);
 
     //Beallitjuk a leiroban a kerelmezo es a fuggoseget
-    dep->requesterResource=(struct resource_t*) highLevel;
-    dep->requiredResource =(struct resource_t*) lowLevel;
+    dep->requesterResource=highLevel;
+    dep->requiredResource =lowLevel;
     //jelezzuk, hogy egy eroforras az igenylo.
     dep->flags.requesterType=RESOURCE_REQUESTER_TYPE__RESOURCE;
     MyRM_addDependencyToResource(highLevel, dep);
@@ -348,7 +348,7 @@ static void MyRM_addResourceToManagedList(resource_t* resource)
         rm->resourceList.first=resource;
     } else
     {   //Van elotte elem
-        rm->resourceList.last->nextResource=(struct resource_t*) resource;
+        rm->resourceList.last->nextResource=resource;
     }
 
     //Ez lesz az utolso eleme a listanak.
@@ -423,10 +423,10 @@ static void MyRM_addResourceToProcessReqList(MyRM_t* rm, resource_t* resource)
         rm->processReqList.first=resource;
     } else
     {   //Mar van eleme a listanak. Hozzaadjuk a vegehez.
-        rm->processReqList.last->processReqList.next=(struct resource_t*)resource;
+        rm->processReqList.last->processReqList.next=resource;
     }
     //Az elozo lancszemnek a sorban korabbi legutolso elem lesz megadva
-    resource->processReqList.prev=(struct resource_t*) rm->processReqList.last;
+    resource->processReqList.prev=rm->processReqList.last;
     //Nincs tovabbi elem a listaban. Ez az utolso.
     resource->processReqList.next=NULL;
     //Megjegyezzuk, hogy ez az utolso elem a sorban
@@ -460,8 +460,8 @@ static void MyRM_deleteResourceFromProcessReqList(MyRM_t* rm, resource_t* resour
     {   //volt elotte a listaban
         if (next)
         {   //Volt utanna is. (Ez egy kozbulso listaelem)
-            next->processReqList.prev=(struct resource_t*) prev;
-            prev->processReqList.next=(struct resource_t*) next;
+            next->processReqList.prev=prev;
+            prev->processReqList.next=next;
         } else
         {   //Ez volt a legutolso elem a listaban
             //Az elozo elembol csinalunk legutolsot.
@@ -1000,7 +1000,7 @@ stop_resource:
                     // fuggveny hivodik meg.
                     //-User eseten pedig a MyRM_user_resourceStatusCB()
                     // hivodik meg.)
-                    dep->depStatusFunc((struct resourceDep_t*)dep,
+                    dep->depStatusFunc(dep,
                                        resourceStatus,
                                        resource->reportedError);
                 }
@@ -1047,7 +1047,7 @@ static void MyRM_sendStatus(resource_t* resource,
             // fuggveny hivodik meg.
             // User eseten pedig a MyRM_user_resourceStatusCB() hivodik meg.)
 
-            dep->depStatusFunc((struct resourceDep_t*)dep,
+            dep->depStatusFunc(dep,
                                resourceStatus,
                                resource->reportedError);
         }
@@ -1176,7 +1176,7 @@ static inline void MyRM_dependenyStop(MyRM_t* rm, resource_t* resource)
 //Az egyes fuggosegek ezen keresztul jeleznek az oket igenylo magasabb szinten
 //levo eroforrasok fele. Vagy forditva, egy eroforras fuggosege ezen keresztul
 //jelzi az allapotat.
-static void MyRM_dependencyStatusCB(struct resourceDep_t* dep,
+static void MyRM_dependencyStatusCB(resourceDep_t* dep,
                                     resourceStatus_t status,
                                     resourceErrorInfo_t* errorInfo)
 {
@@ -1512,7 +1512,7 @@ static void MyRM_resourceStatusCore(resource_t* resource,
             //eroforrast hasznalo masik eroforrasok, vagy userek fele
             //tovabb adhatunk...
             //Reportoljuk, hogy melyik eroforrassal van a hiba
-            resource->errorInfo.resource=(struct resource_t*)resource;
+            resource->errorInfo.resource=resource;
             //informaljuk, hogy mi a hibakod
             resource->errorInfo.errorCode=errorCode;
             //az aktualis modul allapotot is reportoljuk
@@ -1553,7 +1553,7 @@ void MyRM_addResourceStatusRequest(resource_t* resource,
 
     if (resource->firstStatusRequester==NULL)
     {   //ez lesz az elso beregisztralt kerelmezo
-        resource->firstStatusRequester=(struct resourceStatusRequest_t*)request;
+        resource->firstStatusRequester=request;
     } else
     {
         //Lista vegenek keresese. Addig lepked, mig a listat lezaro NULL-ra nem
@@ -1564,7 +1564,7 @@ void MyRM_addResourceStatusRequest(resource_t* resource,
         {
             item = (resourceStatusRequest_t*)item->next;
         }
-        item->next=(struct resourceStatusRequest_t*)request;
+        item->next=request;
     }
     request->next=NULL;
 
@@ -1585,11 +1585,11 @@ void MyRM_createUser(resourceUser_t* user, const resourceUser_config_t* cfg)
     MyRM_LOCK(rm->mutex);
 
     //dependencia leiro letrehozasa az elerni kivant eroforrashoz....
-    user->dependency.requesterResource=(struct resource_t*) NULL;
-    user->dependency.requiredResource =(struct resource_t*) cfg->resource;
+    user->dependency.requesterResource= NULL;
+    user->dependency.requiredResource = cfg->resource;
     //Jelezzuk a dependenciaban, hogy egy user a birtokosa.
     user->dependency.flags.requesterType=RESOURCE_REQUESTER_TYPE__USER;
-    user->dependency.requesterUser=(struct resourceUser_t*)user;
+    user->dependency.requesterUser=user;
     //Beallitja az eroforras altal hivando statusz fuggvenyt, melyen keresztul
     //az eroforras jelezheti az user szamara az allapotvaltozasait
     user->dependency.depStatusFunc=MyRM_user_resourceStatusCB;
@@ -1849,7 +1849,7 @@ void MyRM_restartResource(resourceUser_t* user)
 //------------------------------------------------------------------------------
 //Az userekhez tartozo callback, melyet az altaluk hasznalt eroforras hiv az
 //allapotvaltozasuk szerint...
-static void MyRM_user_resourceStatusCB(struct resourceDep_t* dep,
+static void MyRM_user_resourceStatusCB(resourceDep_t* dep,
                                        resourceStatus_t status,
                                        resourceErrorInfo_t* errorInfo)
 {
