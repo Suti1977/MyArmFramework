@@ -26,17 +26,17 @@ void MySwTimer_addTimer(MySwTimerManager_t* manager, MySwTimer_t* timer)
         timer->prev=NULL;
     } else
     {   //Mar van a listanak eleme. Az utolso utan fuzzuk.
-        timer->prev=(struct MySwTimer_t*) manager->lastTimer;
+        timer->prev=(MySwTimer_t*) manager->lastTimer;
 
         ((MySwTimer_t*)manager->lastTimer)->next=
-                (struct MySwTimer_t*) timer;
+                (MySwTimer_t*) timer;
     }
     //A sort lezarjuk. Ez lesz az utolso.
     timer->next=NULL;
     manager->lastTimer=timer;
 
     //Megjegyzi a timerhez tartozo managert.
-    timer->manager=(struct MySwTimerManager_t*) manager;
+    timer->manager=(MySwTimerManager_t*) manager;
 }
 //------------------------------------------------------------------------------
 //Idozito torlese az idozito manager altal kezelt idozitok listajabol
@@ -47,8 +47,8 @@ void MySwTimer_deleteTimer(MySwTimerManager_t* manager, MySwTimer_t* timer)
 
     if ((prev) && (next))
     {   //lista kozbeni elem. All elotet es utana is elem a listaban
-        prev->next=(struct MySwTimer_t*)next;
-        next->prev=(struct MySwTimer_t*)prev;
+        prev->next=(MySwTimer_t*)next;
+        next->prev=(MySwTimer_t*)prev;
     } else
     if (next)
     {   //Ez a lista elso eleme, es van meg utana elem.
