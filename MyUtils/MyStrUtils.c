@@ -227,5 +227,27 @@ void MyStrUtils_binToHexString(const uint8_t* Src, uint32_t srcLength, char* dst
     *ptr=0x00;
 }
 //------------------------------------------------------------------------------
+//Egy listaban felsorolt string halamazt keres, es ha megtalalta benne a
+//megadott stringet, akkor visszaadja az egyezoseghez tartozo sorra mutato
+//pointert a listaban. Ha nem talalta meg a stringet, akkor NULL-t ad vissza.
+//list: A kereso lista.
+//str: A keresett string
+const MyStrUtils_findInListItem_t* MyStrUtils_findInList(
+                                const MyStrUtils_findInListItem_t* list,
+                                const char* str)
+{
+    for(; list->str!=NULL; list++)
+    {
+        if (strcmp(list->str, str)==0)
+        {   //A stringet megtalalta a tablazatban. Visszaadjuk azt a asort, ahol
+            //megtalalta.
+            return list;
+        }
+    }
+
+    //Ha kilepett a lsitabol, az azt jelenti, hoyg nem talalta meg a keresett
+    //stringet. NULL-t adunk vissza
+    return NULL;
+}
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------

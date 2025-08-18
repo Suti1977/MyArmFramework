@@ -221,9 +221,9 @@ void MyRTOS_printTasks(void)
 }
 //------------------------------------------------------------------------------
 //Akkor jon fel, ha a stack elfogyott valamelyik tasknal.
-void __attribute__((noreturn)) vApplicationStackOverflowHook(TaskHandle_t pxCurrentTCB)
+void __attribute__((noreturn)) vApplicationStackOverflowHook(TaskHandle_t pxCurrentTCB, char *pcTaskName)
 {
-    printf("\n\nSTACK OVERFLOW!\n");
+    printf("\n\nSTACK OVERFLOW! Task: %s\n", pcTaskName);
 
     MyRTOS_printTaskInfo(pxCurrentTCB);
 
