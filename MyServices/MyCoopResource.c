@@ -303,7 +303,7 @@ MYSM_STATE(MyCoopResource_sm_stopping)
     if (this->control.prohibitStop==0)
     {   //leallitasi kerelem van, es mar az applikacio is engedi, azt a prohibit
         //flag (mar) nem tiltja.
-
+prohibit_cleared:
         #if COOP_RESOURCE_TRACING
         printf("MyCoopResource STOP. (%s)\n", this->cfg->name);
         #endif
@@ -328,6 +328,14 @@ MYSM_STATE(MyCoopResource_sm_stopping)
     {
         status=this->cfg->loopFunc(this->cfg->callbackData, &this->control);
         if (status) goto error;
+
+        //Ha a loop futtatasa kozben az applikacio torolte a prohibitStop
+        //bitet, akkor az azt jelenti, hogy most el kellinditani a
+        //leallitasat az eroforrasnak.
+        if (this->control.prohibitStop==0)
+        {   //Ugras azonnal a leallitast befejezo reszre.
+            goto prohibit_cleared;
+        }
     }
 
     return status;
