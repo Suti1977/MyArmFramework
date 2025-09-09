@@ -79,6 +79,12 @@ void MyInputs_addInput(MyInputs_manager_t* manager, MyInput_t* input)
     //MySwTimer_addTimer(&manager->timerManager, &input->timer);
 }
 //------------------------------------------------------------------------------
+//Bemenetnek kezdo mintavetelezes tiltasa
+void MyInputs_setSkipInitialSampling(MyInput_t* input)
+{
+    input->skipInitialSampling=true;
+}
+//------------------------------------------------------------------------------
 static void __attribute__((noreturn)) MyInputs_task(void* taskParam)
 {
     MyInputs_manager_t* manager=(MyInputs_manager_t*) taskParam;
@@ -90,10 +96,18 @@ static void __attribute__((noreturn)) MyInputs_task(void* taskParam)
     MyInput_t* input=manager->firstInput;
     while(input)
     {
-        MyInput_sample_t sample=input->cfg->samplingFunc(input->cfg->privData);
-        input->lastSample=sample;
-        input->state=sample;
-        input->lastState=sample;
+        if (input->skipInitialSampling)
+        {   //Initnel a mintavetelezes kihagyasa.
+            input->lastSample=input->cfg->inactiveState;
+            input->state     =input->cfg->inactiveState;
+            input->lastState =input->cfg->inactiveState;
+        } else
+        {
+            MyInput_sample_t sample=input->cfg->samplingFunc(input->cfg->privData);
+            input->lastSample=sample;
+            input->state=sample;
+            input->lastState=sample;
+        }
         input=(MyInput_t*)input->next;
     }
 

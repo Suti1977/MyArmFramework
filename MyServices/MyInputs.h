@@ -99,6 +99,11 @@ struct MyInput
     //true, ha a bemenet aktiv (mondjuk nyomva van)
     bool active;
 
+    //Initkor nem végez mintavetelezest, ha ez true.
+    //Olyan bemeneteknel alkalmazzuk, ahol fontos, hogy inaktiv
+    //allapotot feltetelezzen az elso mintazas elott.
+    bool skipInitialSampling;
+
     //lancolt listaban a kovetkezo bemenetre mutat
     MyInput_t* next;
 };
@@ -156,6 +161,9 @@ void MyInputs_addInput(MyInputs_manager_t* manager, MyInput_t* input);
 
 //True-t ad vissza, ha a kezelesben meg futnak folymatok.
 bool MyInputs_isActive(void);
+
+//Bemenetnek kezdo mintavetelezes tiltasa
+void MyInputs_setSkipInitialSampling(MyInput_t* input);
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 #endif //MY_INPUTS_H_
