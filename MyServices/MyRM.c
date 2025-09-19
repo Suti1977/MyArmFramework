@@ -619,6 +619,15 @@ static inline void MyRM_checkStartStop(MyRM_t* rm, resource_t* resource)
 
                 if (resource->depCnt!=0)
                 {   //Az eroforrasnak meg van nem elindult fuggosege.
+
+                    if (resource->usageCnt==0)
+                    {   //Az eroforrasrol kozben az inditasi folyamata alatt
+                        //mindenki lemondott.
+                        //Nem varunk tovabb, annak minden fuggosegere, hogy
+                        //elinduljanak, hanem azonnal leallunk.                        
+                        goto abort_starting;
+                    }
+
                     //Tovabb varakozunk, hogy az osszes fuggosege elinduljon...
                     break;
                 }
@@ -711,8 +720,17 @@ static inline void MyRM_checkStartStop(MyRM_t* rm, resource_t* resource)
                     //inditani annak leallitasat.
                     resource->flags.checkStartStopReq=true;
                 } else
-                {   //Az eroforras meg nincs elinditva. Varakozunk tovabb...
+                {   //Az eroforras meg nem indult el. Futnak benne az inditasi
+                    //folyamatok. Varakozunk tovabb...
 
+                    //Jott kozben leallitasi igeny?
+                    if (resource->usageCnt==0)
+                    {   //Egy elinditott, de az indulasi folyamatait meg nem
+                        //befejezo eroforrast akarnak leallitani.
+                        //Ebben az esetben jelezni kell, hogy megaszkitjak az
+                        //indulasi folyamatot.
+                        goto abort_active_starting;
+                    }
                 }
             } //(resource->started==false) else
 
@@ -753,6 +771,11 @@ static inline void MyRM_checkStartStop(MyRM_t* rm, resource_t* resource)
                     //varunk tovabb....
                     break;
                 }
+
+abort_starting: //Egyszrusites! Goto-val ide ugrik, ha inditasi allapot alatt
+                //megis minden hasznaloja lemond az eorforrasrol, es nem szabad
+                //megvarni annak a teljes indulasat, hanem azonnal le kell allni.
+
                 resource->flags.halted=false;
 
                 //Az eroforras leallt, es mar senki sem hasznalja.
@@ -839,7 +862,7 @@ static inline void MyRM_checkStartStop(MyRM_t* rm, resource_t* resource)
 
             if (resource->usageCnt==0)
             {   //Nincs hasznaloja. Nincs mit tenni. Varunk ujabb hasznalati
-                //igenybe...
+                //igenybevetelt...
 
             } else
             {   //Van hasznalati kerelem.
@@ -863,7 +886,7 @@ static inline void MyRM_checkStartStop(MyRM_t* rm, resource_t* resource)
                 {
                     MyRM_startDependency(dep);
 
-                    //lancolt list akovetkezo elemere allas.
+                    //lancolt lista kovetkezo elemere allas.
                     dep=(resourceDep_t*)dep->nextDependency;
                 }
 
@@ -885,12 +908,19 @@ static inline void MyRM_checkStartStop(MyRM_t* rm, resource_t* resource)
             } else
             {   //Az eroforras eddig mukodott, de most mar nincsnek hasznaloi.
                 //Az eroforrast le kell allitani.
+
+
+abort_active_starting:
+                //Ide ugruik, ha egy eroforras el lett inditva, de meg benne
+                //az inditasi folyamatok futnak. Goto-val ugrunk ide, a kod
+                //egyszerusites erdekeben.
                 resource->state=RESOURCE_STATE_STOPPING;
 
-stop_resource:
+stop_resource:                
                 ///eroforras leallitasa...
                 //Itt a kod egszerusitese miatt, goto-val ide ugrik, ha hiba
                 //miatt is le kell allitani az eroforrast...
+
 
                 if (resource->flags.running)                                      //?????????????????????
                 {   //Az eroforras fut. Korabban ezt mar jelezte a kerelmezoi

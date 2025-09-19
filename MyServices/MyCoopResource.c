@@ -193,7 +193,15 @@ MYSM_STATE(MyCoopResource_sm_starting)
     }
 
     //<--ide akkor jut, ha a start fuggvenyben nem mondtak azt, hogy elindult
-    //az eroforras, tehat a control.run flag-je torolva lett.
+    //az eroforras, tehat a control.run flag-je torolve lett.
+
+    if (this->controlEvents & MY_COOP_RESOURCE_EVENT__STOP_REQUEST)
+    {   //Leallitasi kerelem erkezett a manager felol, mikozben az eroforras
+        //indul. Az eroforrast a leallitasi allapotba tesszuk.
+        this->controlEvents &= ~MY_COOP_RESOURCE_EVENT__STOP_REQUEST;
+
+        MYSM_CHANGE_STATE(MyCoopResource_sm_stopping);
+    }
 
     //Applikacios loop futtatasa, melyben az eroforras indulast vegrehajtja...
     if (this->cfg->loopFunc)
