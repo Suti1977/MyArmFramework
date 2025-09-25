@@ -1690,9 +1690,23 @@ void MyRM_useResource(resourceUser_t* user)
             break;
 
         case RESOURCEUSERSTATE_WAITING_FOR_START:
+        break;
         case RESOURCEUSERSTATE_RUN:
             //Mar egy korabbi inditasra varunk, vagy mar mukodik az eroforras.
             //Nem inditunk ra ujra.
+
+            //Statusz kuldese azoknak a folyamatoknak, melyek varjak az indulast
+            if (user->statusFunc)
+            {
+                resource_t* resource=
+                            ((resource_t*)user->dependency.requiredResource);
+
+                user->statusFunc(resource,
+                                 RESOURCE_RUN,
+                                 resource->reportedError,
+                                 user->callbackData);
+            }
+
             break;
 
 
