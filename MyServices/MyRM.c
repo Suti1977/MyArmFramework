@@ -159,7 +159,7 @@ static void MyRM_printResourceInfo(resource_t* resource, bool printDeps)
                 printf("??? ");
             }
             //allapot kiirasa
-            printf("[%s] ",MyRM_resourceStateStrings[((resource_t*)dep->requiredResource)->state]);
+            printf("[%s] (%d)",MyRM_resourceStateStrings[((resource_t*)dep->requiredResource)->state], dep->flags.delayedStartRequest);
             //Kovetkezo elemre lepunk a listaban
             dep=(resourceDep_t*)dep->nextDependency;
         }
@@ -178,16 +178,17 @@ static void MyRM_printResourceInfo(resource_t* resource, bool printDeps)
                 requesterName=((resource_t*)requester->requesterResource)->resourceName;
                 if (requesterName==NULL) requesterName="???";
                 //Nev es allapot kiirasa
-                printf("%s[%s]",
+                printf("%s[%s] (%d)",
                        requesterName,
-                       MyRM_resourceStateStrings[((resource_t*)requester->requesterResource)->state]
+                       MyRM_resourceStateStrings[((resource_t*)requester->requesterResource)->state],
+                       requester->flags.delayedStartRequest
                        );
 
             } else
             {
                 requesterName=((resourceUser_t*)requester->requesterUser)->userName;
                 if (requesterName==NULL) requesterName="???";
-                printf("(U)%s[%s]",
+                printf("(U)%s[%s] (1)",
                        requesterName,
                        MyRM_resourceUserStateStrings[((resourceUser_t*)requester->requesterUser)->state]
                        );
@@ -1196,6 +1197,7 @@ static inline void MyRM_dependenyStop(MyRM_t* rm, resource_t* resource)
     //A fuggosegek szamanak novelese
     if (resource->depCnt>=resource->depCount)
     {   //A fuggoseg szamlalo elkeveredett.
+        printf("DEP CNT ERROR! Resource: %s\n", resource->resourceName);
         ASSERT(0);
         while(1);
     }
@@ -1295,11 +1297,12 @@ static void MyRM_startDependency(resourceDep_t* dep)
             requesterName=((resourceUser_t*)dep->requesterUser)->userName;
         }
         if (requesterName==NULL) requesterName="???";
-        printf("MyRM_startDependency()  %s%s ----> %s\n",
+        printf("MyRM_startDependency()  %s%s ----> %s  [%s]\n",
                (dep->flags.requesterType==RESOURCE_REQUESTER_TYPE__USER) ? "(U)"
                                                                          : "",
                requesterName,
-               dependency->resourceName);
+               dependency->resourceName,
+               MyRM_resourceStateStrings[dependency->state]);
     #endif
 
 
@@ -1309,6 +1312,12 @@ static void MyRM_startDependency(resourceDep_t* dep)
         //lehet ervenyre juttatni, miutan az igenyelt eroforras leallt.
         //A kerelmet eltaroljuk.
         dep->flags.delayedStartRequest=true;
+
+        #if MyRM_TRACE
+            printf("delayedStartRequest setted  %s --> %s\n",
+                   requesterName,
+                   dependency->resourceName);
+        #endif
 
         //Az inditando eroforras a leallasa utan vegignezi majd az igenyloi
         //dependencia leiroit, es ha talal bennuk kesleltetett kerest, akkor
@@ -1368,13 +1377,17 @@ static void MyRM_stopDependency(resourceDep_t* dep)
             requesterName=((resourceUser_t*)dep->requesterUser)->userName;
         }
         if (requesterName==NULL) requesterName="???";
-        printf("MyRM_stopDependency()  %s%s ----> %s\n",
+        printf("MyRM_stopDependency()  %s%s ----> %s  [%s]\n",
                (dep->flags.requesterType==RESOURCE_REQUESTER_TYPE__USER) ? "(U)" : "",
                requesterName,
-               dependency->resourceName);
+               dependency->resourceName,
+               MyRM_resourceStateStrings[dependency->state]);
     #endif
-
-    //Az eroforrast hasznalok szamanak cskkenetese
+if (dependency->usageCnt==0)
+{
+    printf("\n\n______________ASSERT! %s\n\n", dependency->resourceName);
+}
+    //Az eroforrast hasznalok szamanak csokkenetese
     if (dependency->usageCnt==0)
     {   //Az eroforras kezelesben hiba van. Nem mondhatnanak le tobben,
         //mint amennyien korabban igenybe vettek!
@@ -1388,7 +1401,17 @@ static void MyRM_stopDependency(resourceDep_t* dep)
             dependency->flags.statusRequest=true;
             dep->flags.statusRequest=true;            
             goto skip;
-        }        
+        }
+/*
+        if (dependency->state==RESOURCE_STATE_STOPPING)
+        {   //Az eroforras mar all le.
+            dependency->flags.statusRequest=true;
+            dep->flags.statusRequest=true;
+            goto skip;
+        }
+*/
+        //??????????????????
+        //if (dep->flags.delayedStartRequest) goto skip;
 
         ASSERT(0);
         return;
@@ -1436,7 +1459,7 @@ static void MyRM_resourceStatusCore(resource_t* resource,
            (int)errorCode);
     #endif
 
-    //Ha az erorCode hibat jelez, akkor hibara visszuk az eroforrast
+    //Ha az erroCode hibat jelez, akkor hibara visszuk az eroforrast
     if (errorCode) resourceStatus=RESOURCE_ERROR;
 
     switch(resourceStatus)
