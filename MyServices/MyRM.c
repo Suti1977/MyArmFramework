@@ -1865,19 +1865,22 @@ void MyRM_restartResource(resourceUser_t* user)
             //vagy az eroforras hibaja miatt az user hiba allapotban van.
             //Ebbol kilepni, az eroforras leallitasaval lehet.
 
-            user->restartRequestFlag=true;
+            if (user->restartRequestFlag==false)
+            {   //Meg nincs ujrainditasi kerelem az eroforrasra.
+                user->restartRequestFlag=true;
 
-            //Beallitjuk, hogy varunk annak leallasara
-            user->state=RESOURCEUSERSTATE_WAITING_FOR_STOP_OR_DONE;
+                //Beallitjuk, hogy varunk annak leallasara
+                user->state=RESOURCEUSERSTATE_WAITING_FOR_STOP_OR_DONE;
 
-            //Eroforrast leallitjuk (legalabb is bejelezzuk, hogy egy user
-            //lemond rola, igy ha annak usageCnt szamlaloja 0-ra csokken, akkor
-            //az eroforras le fog allni, majd ha mindenki lemondott rola, akkor
-            //az ujrainditasi keres miatt az ujra fog indulni.)
-            MyRM_stopDependency(&user->dependency);
+                //Eroforrast leallitjuk (legalabb is bejelezzuk, hogy egy user
+                //lemond rola, igy ha annak usageCnt szamlaloja 0-ra csokken, akkor
+                //az eroforras le fog allni, majd ha mindenki lemondott rola, akkor
+                //az ujrainditasi keres miatt az ujra fog indulni.)
+                MyRM_stopDependency(&user->dependency);
 
-            //Jelzes a taszknak...
-            MyRM_sendNotify(rm, MyRM_NOTIFY__RESOURCE_UNUSE);
+                //Jelzes a taszknak...
+                MyRM_sendNotify(rm, MyRM_NOTIFY__RESOURCE_UNUSE);
+            }
             break;
 
         case RESOURCEUSERSTATE_WAITING_FOR_STOP_OR_DONE:
