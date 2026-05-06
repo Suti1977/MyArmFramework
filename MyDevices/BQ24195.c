@@ -410,3 +410,17 @@ status_t BQ24195_readFaultInfo(BQ24195_t* dev,
     return BQ24195_readReg(dev, BQ24195_REG09, (uint8_t*) faultInfo);
 }
 //------------------------------------------------------------------------------
+//OTG mod engedelyezese
+status_t BQ24195_setOTG(BQ24195_t* dev, bool enableOTG)
+{
+    status_t status;
+    uint8_t regData;
+    status=BQ24195_readReg(dev, BQ24195_REG01, &regData);
+    if (status) return status;
+
+    if (enableOTG) regData |= BQ24195_REG01_OTG_CONFIG;
+    else regData &= ~BQ24195_REG01_OTG_CONFIG;
+
+    return BQ24195_writeReg(dev, BQ24195_REG01, regData);
+}
+//------------------------------------------------------------------------------
