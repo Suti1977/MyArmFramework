@@ -13,6 +13,7 @@ MYSM_STATE(MyCoopResource_sm_starting);
 MYSM_STATE(MyCoopResource_sm_run);
 MYSM_STATE(MyCoopResource_sm_stopping);
 MYSM_STATE(MyCoopResource_sm_error);
+MYSM_STATE(MyCoopResource_sm_closingError);
 //------------------------------------------------------------------------------
 //Taszkal tamogatott eroforras letrehozasa
 void MyCoopResource_create(resource_t* resource,
@@ -156,6 +157,8 @@ MYSM_STATE(MyCoopResource_sm_starting)
         this->control.prohibitStop=0;
         this->control.stopRequest=0;
         this->control.timed=0;
+        this->control.errorClosed=0;
+        this->errorCleared=false;
         this->errorCode=kStatus_Success;
 
         //Alapertelmezesben azt mondjuk, hogy a startFunc() callback meghivasa
@@ -364,6 +367,10 @@ MYSM_STATE(MyCoopResource_sm_error)
         printf("MyCoopResource ERROR! (%s)\n", this->cfg->name);
         #endif
 
+        //Ha futna a loop timer, akkor azt le kell allitani
+        MyCoopTimer_stop(&this->loopTimer);
+
+        //A hiba eseten hivando callback funckio futtasa
         if (this->cfg->errorFunc)
         {
             this->cfg->errorFunc(this->cfg->callbackData, this->errorCode);
@@ -372,10 +379,14 @@ MYSM_STATE(MyCoopResource_sm_error)
         //Jelzes a manager fele, hogy az eroforras hibara futott...
         MyRM_resourceStatus(this->resource, RESOURCE_ERROR, this->errorCode);
 
+        if (this->cfg->errorLoopFunc)
+        {   //Van definialva a hiba miatti leallitashoz futtatando funkcio.
+            //Annak megfelelo allapotra ugras...
+            MYSM_CHANGE_STATE(MyCoopResource_sm_closingError);
+        }
+
         //A hiba eseten csak a leallitasi kerelmet fogadjuk a manager felol.
         this->control.waitedEvents=MY_COOP_RESOURCE_EVENT__STOP_REQUEST;
-        //Ha futna a loop timer, akkor azt le kell allitani
-        MyCoopTimer_stop(&this->loopTimer);
     }
 
 
@@ -399,6 +410,79 @@ MYSM_STATE(MyCoopResource_sm_error)
     return status;
 }
 //------------------------------------------------------------------------------
+//Hiba lezaro folyamat futtatasa...
+MYSM_STATE(MyCoopResource_sm_closingError)
+{
+    coopResourceExtension_t* this=MYSM_USER_DATA(coopResourceExtension_t*);
+    status_t status=kStatus_Success;
+
+    if (MYSM_STATE_INIT())
+    {
+        #if COOP_RESOURCE_TRACING
+        printf("MyCoopResource_sm_closingError()\n";
+        #endif
+
+        this->errorCleared=false;
+        this->control.errorClosed=false;
+        this->control.waitTime=0;
+
+        //A hiba ciklus elott hivodo callback futtatasa.
+        //Itt lehetoseg van a control objektum modositasara
+        if (this->cfg->errorLoopStartFunc)
+        {   //eroforrast indito funkcio meghivasa, mivel van ilyen beallitva
+            status=this->cfg->errorLoopStartFunc(this->cfg->callbackData,
+                                        &this->control);
+            if (status)
+            {
+                //TODO: itt a hibakoddal kellene valamit kezdeni.
+                //Egyenlore ignoralom
+                status=kStatus_Success;
+            }
+        }
+    }
+
+
+    //Varakozas arra, hogy az eroforras leallitasi kerest kapjon a managertol.
+    //(Ez szukseges, hogy torlodjon benne a hiba.)
+    //Ez parhuzamosan erkezhet a lezarasi folyamatokkal.
+    if (this->controlEvents & MY_COOP_RESOURCE_EVENT__STOP_REQUEST)
+    {   //Leallitasi kerelem erkezett a manager felol.
+        this->controlEvents &= ~MY_COOP_RESOURCE_EVENT__STOP_REQUEST;
+
+        #if COOP_RESOURCE_TRACING
+        printf("MyCoopResource Error cleared! (%s)\n", this->cfg->name);
+        #endif
+
+        //Megjegyzi, hogy a hiba torlesre kerul.
+        this->errorCleared=true;
+    }
+
+
+    //Lezarast uzemezo folyamatot futtato fuggveny hivogatasa
+    status=this->cfg->errorLoopFunc(this->cfg->callbackData, &this->control);
+    this->control.timed=false;
+    if (status)
+    {
+        //TODO: itt a hibakoddal kellene valamit kezdeni.
+        //Egyenlore ignoralom
+        status=kStatus_Success;
+    }
+
+
+    if ((this->control.errorClosed) && (this->errorCleared))
+    {   //Vegzett a leallitasi folyamat, es
+
+        //Jelzes a manager fele, hogy az eroforras leallt.
+        //Torlodni fog a hiba.
+        MyRM_resourceStatus(this->resource, RESOURCE_STOP, kStatus_Success);
+
+        MYSM_CHANGE_STATE(MyCoopResource_sm_waitingForStart);
+    }
+
+    return status;
+}
+//------------------------------------------------------------------------------
+
 //Kooperativ eroforrasnak esemeny kuldese
 void MyCoopResource_setEvent(resource_t* resource, uint32_t event)
 {
