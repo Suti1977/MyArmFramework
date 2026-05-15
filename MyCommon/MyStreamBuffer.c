@@ -7,6 +7,7 @@
 #include "MyStreamBuffer.h"
 #include <string.h>
 
+#if USE_FREERTOS
 //------------------------------------------------------------------------------
 //Stream buffer kezdeti inicializalasa es konfiguralasa
 void MyStreamBuffer_init(MyStreamBuffer_t* buffer,
@@ -342,3 +343,5 @@ uint32_t MyStreamBuffer_sendFromIsr(MyStreamBuffer_t* buffer,
     return length;
 }
 //------------------------------------------------------------------------------
+
+#endif // #if USE_FREERTOS

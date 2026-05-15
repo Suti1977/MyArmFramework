@@ -7,6 +7,7 @@
 #ifndef MYSTREAMBUFFER_H_
 #define MYSTREAMBUFFER_H_
 
+#if USE_FREERTOS
 #include "MyCommon.h"
 #include "MyAtomic.h"
 //------------------------------------------------------------------------------
@@ -132,4 +133,5 @@ static inline uint32_t MyStreamBuffer_getAvailable(MyStreamBuffer_t* buffer)
 void MyStreamBuffer_setTriggerLevel(MyStreamBuffer_t* buffer, uint32_t level);
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
+#endif // #if USE_FREERTOS
 #endif //MYSTREAMBUFFER_H_
