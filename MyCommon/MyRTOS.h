@@ -31,6 +31,8 @@ uint32_t MyRTOS_waitForNotifyEvents(uint32_t waitedEvents,
 //64 bites sajat tick szamlalo lekerdezese. A rutinban a lekerdezes idejere
 //critical section kerul nyitasra.
 uint64_t MyRTOS_getTick(void);
+// 64 bites sajat tick szamlalo lekerdezese megsazkitas alol
+uint64_t MyRTOS_getTickFromIsr(void);
 
 //A megadott taszkrol irogat ki informaciokat a termianlra
 void MyRTOS_printTaskInfo(TaskHandle_t TaskHandle);

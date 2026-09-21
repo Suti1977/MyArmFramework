@@ -171,6 +171,13 @@ uint64_t MyRTOS_getTick(void)
     return Res;
 }
 //------------------------------------------------------------------------------
+// 64 bites sajat tick szamlalo lekerdezese megsazkitas alol
+uint64_t MyRTOS_getTickFromIsr(void)
+{
+    return MyRTOS_tickCnt;
+}
+//------------------------------------------------------------------------------
+
 #if( configUSE_TICKLESS_IDLE == 1 )
 //Tickless IDLE eseten hasznaljuk. Csak ugy mint az RTOS tick szamlalojat,
 //ugy a sajat tick szamlalot is adjusztalni kell, az idle-ben toltott idovel.
