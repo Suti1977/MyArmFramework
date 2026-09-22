@@ -171,7 +171,7 @@ static void MyWork_task(void* argument)
             // De akkor a kritikus kapu sokaig van fogva.
             now = xTaskGetTickCount();
 
-            if (now > work->expiry)
+            if (now < work->expiry)
             {
                 // A soron levo vorkot nem kell meg futtatni. Kilepes es varas.
                 taskEXIT_CRITICAL();
