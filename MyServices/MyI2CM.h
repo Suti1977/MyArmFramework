@@ -72,6 +72,8 @@ enum
     kMyI2CMStatus_customErrorCodes,
 };
 //------------------------------------------------------------------------------
+typedef struct MyI2CM MyI2CM_t;
+//------------------------------------------------------------------------------
 //  Altalanos I2C buszra kotott eszkozok elerese
 //  Egy-egy ilyen strukturaban tarolodnak azok az informaciok, melyek egy eszkoz
 //  eleresehez szuksegesek. Ilyen peldaul, hogy melyik I2C buszon talalhato,
@@ -79,7 +81,7 @@ enum
 typedef struct
 {
     //A hozza tartozo I2C driver handlerere mutat
-    struct MyI2CM_t*   i2cm;
+    MyI2CM_t*   i2cm;
     //Az eszkoz slave cime a buszon 7 bites
     uint8_t     slaveAddress;
     //Az eszkozhoz tartozo driver valtozoira mutat. Ezt minden driver eseten
@@ -154,7 +156,7 @@ typedef struct
 } MyI2CM_Config_t;
 //------------------------------------------------------------------------------
 //MyI2CM valtozoi
-typedef struct MyI2CM_t_
+struct MyI2CM
 {
     //Hardver absztrakcios reteg parameterei.
     //A megadott konfiguracionak permanensen a memoriaban kell maradnia!
@@ -175,7 +177,7 @@ typedef struct MyI2CM_t_
     MyI2CM_errorFunc_t* errorFunc;
     //Hiba eseten meghivodo callback fuggvenynek atadando tetszoleges adat
     void* errorFuncPrivData;
-} MyI2CM_t;
+};
 //------------------------------------------------------------------------------
 //I2C master driver letrehozasa es konfiguralasa.
 //Fontos! A config altal mutatott konfiguracionak permanensen a memoriaban

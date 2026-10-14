@@ -22,6 +22,13 @@
 #define MY_STRINGIZE2(s) #s
 #define MY_STRINGIZE(s) MY_STRINGIZE2(s)
 
+#ifndef MIN
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#endif
+
+#ifndef MAX
+#define MAX(a,b) (((a)>(b))?(a):(b))
+#endif
 
 
 

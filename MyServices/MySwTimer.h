@@ -8,12 +8,15 @@
 
 #include "MyCommon.h"
 
+typedef struct MySwTimer MySwTimer_t;
+typedef struct MySwTimerManager MySwTimerManager_t;
+
 //Idozites letelte eseten a MySwTimer_runManager() futtatasa alatt hivott
 //callback tipusa;
 typedef void MySwTimer_expiredFunc_t(void* callbackData);
 //------------------------------------------------------------------------------
 //Idozito leiro definicioja. Minden idoziteshez tartozik egy ilyen leiro.
-typedef struct
+struct MySwTimer
 {
     //true, ha az idozites aktiv, es mukodik.
     bool active;
@@ -29,7 +32,7 @@ typedef struct
     bool expired;
 
     //Az idozitot kezelo managerre mutat;
-    struct MySwTimerManager_t* manager;
+    MySwTimerManager_t* manager;
 
     //Idozites letelte eseten a MySwTimer_runManager() futtatasa alatt hivott
     //callback
@@ -38,12 +41,12 @@ typedef struct
     void* callbackData;
 
     //Lancolt lista kezeleshez szukseges valtozok
-    struct MySwTimer_t* next;
-    struct MySwTimer_t* prev;
-} MySwTimer_t;
+    MySwTimer_t* next;
+    MySwTimer_t* prev;
+};
 //------------------------------------------------------------------------------
 //MySwTimer valtozoi
-typedef struct
+struct MySwTimerManager
 {
     //A managger altal ismert ido.
     uint64_t time;
@@ -56,7 +59,7 @@ typedef struct
     //A kovetkezo futtatasig szukseges ido, amikor valamelyik aktivi idozitoje
     //aktiv lesz.
     uint64_t nextExecutionTime;
-} MySwTimerManager_t;
+};
 //------------------------------------------------------------------------------
 //Idozito manager kezdeti inicializalasa
 void MySwTimer_initManager(MySwTimerManager_t* manager);

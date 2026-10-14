@@ -23,18 +23,18 @@
 
 #include "MyCommon.h"
 
-struct MySM_t;
+typedef struct MySM MySM_t;
 
 //Allapotokhoz tartozo fuggvenyek felepitese
-typedef status_t MySM_stateFunc_t(struct MySM_t* sm);
+typedef status_t MySM_stateFunc_t(MySM_t* sm);
 //Az allapotok elhagyasakor hivhato fuggveny definialasa
-typedef status_t MySM_stateExitFunc(struct MySM_t* sm);
+typedef status_t MySM_stateExitFunc(MySM_t* sm);
 //Az allapotgep belso ciklusaban, minden allapotvaltas vagy allapot futtatas
 //elott meghivodo fuggevny definicioja
-typedef status_t MySM_alwaysRunFunc(struct MySM_t* sm);
+typedef status_t MySM_alwaysRunFunc(MySM_t* sm);
 //------------------------------------------------------------------------------
 //MySM valtozoi
-typedef struct _MySM
+struct MySM
 {
     //Az uj allapotra mutat. Ha NULL, akkor nincs allapotvaltas.
     MySM_stateFunc_t* newState;
@@ -56,7 +56,7 @@ typedef struct _MySM
     //True, ha az allapotvaltas miatt az uj allapot most van hivva eloszor.
     bool    init;
 
-} MySM_t;
+};
 //------------------------------------------------------------------------------
 //Allapotgep kezdeti inicializalasa
 void MySM_init(MySM_t* sm, MySM_stateFunc_t* initialState, void* userData);
@@ -95,17 +95,17 @@ void MySM_setAlwaysRunFunc(MySM_t* sm, MySM_alwaysRunFunc* alwaysRunFunc);
 //Makro, mely segit letrehozni az allapotfuggvenyeket
 //MySM_stateFunc_t
 #define MYSM_STATE(functionName) \
-    status_t functionName (struct MySM_t* sm)
+    status_t functionName (MySM_t* sm)
 
 //Makro, mely segit letrehozni az allapotok elhagyasakor hivhato fuggevnyeket
 //MySM_stateExitFunc
 #define MYSM_STATE_EXIT_FUNC(functionName) \
-    status_t functionName (struct MySM_t* sm)
+    status_t functionName (MySM_t* sm)
 
 //Makro, mely segit letrehozni az allapotgepben mindig lefutatott fuggvenyt
 //MySM_alwaysRunFunc
 #define MYSM_ALWAYS_RUN_FUNC(functionName) \
-    status_t functionName (struct MySM_t* sm)
+    status_t functionName (MySM_t* sm)
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------

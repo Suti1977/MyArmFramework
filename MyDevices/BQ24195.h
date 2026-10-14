@@ -53,6 +53,7 @@ typedef enum
 
 #define BQ24195_REG01_CHG_CONFIG            (1 << 4)
 
+
 #define BQ24195_REG02_ICHG_SHIFT            2
 #define BQ24195_REG02_ICHG_MASK             (0x3f << BQ24195_REG02_ICHG_SHIFT)
 
@@ -212,7 +213,6 @@ typedef union
     uint8_t reg;
 } BQ24195_faultInfo_t;
 
-
 //------------------------------------------------------------------------------
 //BQ24195 driver valtozoi
 typedef struct
@@ -326,6 +326,9 @@ status_t BQ24195_readSystemStatus(BQ24195_t* dev,
 //Read fault status
 status_t BQ24195_readFaultInfo(BQ24195_t* dev,
                                BQ24195_faultInfo_t* faultInfo);
+
+//OTG mod engedelyezese
+status_t BQ24195_setOTG(BQ24195_t* dev, bool enableOTG);
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 #endif //BQ24195_H_

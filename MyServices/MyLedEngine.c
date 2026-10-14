@@ -406,7 +406,7 @@ void MyLedEngine_configurePrg(MyLedPrg_t* prg, const MyLedPrg_config_t* cfg)
     //megjegyezzuk, hogy a programot melyik engine hajtja. Kesobb ez alapjan
     //lesz a megfelelo engine triggerelve
     MyLedEngine_t* engine=cfg->engine;
-    prg->engine=(struct MyLedEngine_t*) engine;
+    prg->engine=engine;
 
     //Program hozzaadasa a megfelelo engine lancolt listajahoz...
     xSemaphoreTake(engine->mutex, portMAX_DELAY);

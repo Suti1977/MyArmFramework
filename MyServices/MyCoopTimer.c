@@ -15,7 +15,7 @@ void MyCoopTimer_createTimer(resource_t* resource, MyCoopTimer_t* timer)
 {
     memset(timer, 0, sizeof(MyCoopTimer_t));
 
-    timer->owner = (struct coopResourceExtension_t*)resource->ext;
+    timer->owner = (coopResourceExtension_t*)resource->ext;
     coopResourceGroup_t* group=
         (coopResourceGroup_t*)((coopResourceExtension_t*)timer->owner)->group;
 
@@ -36,7 +36,7 @@ void MyCoopTimer_createTimer(resource_t* resource, MyCoopTimer_t* timer)
 //Idozito torlese az eroforrasbol
 void MyCoopTimer_deleteTimer(resource_t* resource, MyCoopTimer_t* timer)
 {
-    timer->owner = (struct coopResourceExtension_t*)resource->ext;
+    timer->owner = (coopResourceExtension_t*)resource->ext;
     coopResourceGroup_t* group=
         (coopResourceGroup_t*)((coopResourceExtension_t*)timer->owner)->group;
 

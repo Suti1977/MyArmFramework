@@ -13,22 +13,23 @@
 //callback definicioja
 typedef void MyCoopTimer_expiredFunc_t(void* callbackData);
 
-struct coopResourceExtension_t;
+typedef struct coopResourceExtension coopResourceExtension_t;
+typedef struct MyCoopTimer MyCoopTimer_t;
 //------------------------------------------------------------------------------
 //MyCoopTimer valtozoi
-typedef struct
+struct MyCoopTimer
 {
     //A hasznalt szoftveres idozito valtozoi
     MySwTimer_t timer;
 
     //A timerhez tartozo kooperativ eroforras
-    struct coopResourceExtension_t* owner;
+    coopResourceExtension_t* owner;
 
     //Timer lejartakor hivodo, beregisztralhato callback funkcio
     MyCoopTimer_expiredFunc_t* expiredFunc;
     //A callback funkcioknal hasznalt tetszoleges user adat
     void* callbackData;
-} MyCoopTimer_t;
+};
 //------------------------------------------------------------------------------
 //Uj idozito hozzaadasa az eroforrashoz
 void MyCoopTimer_createTimer(resource_t* resource, MyCoopTimer_t* timer);

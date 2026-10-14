@@ -36,6 +36,26 @@ int MyStrUtils_hexStringToBin(const char* srcStr,
 void MyStrUtils_binToHexString(const uint8_t* src,
                                uint32_t srcLength,
                                char* dst);
+
+//Ilyen elemekbol epulhet fel egy lista, melyeken keresni tud a
+//MyStrUtils_findInList() rutin.
+//A listat a NULL string zarja
+typedef struct
+{
+    //A hasonlitott string
+    const char* str;
+    //A talalat eseten hasznalhato tetszoleges adat.
+    void* data;
+}MyStrUtils_findInListItem_t;
+
+//Egy listaban felsorolt string halamazt keres, es ha megtalalta benne a
+//megadott stringet, akkor visszaadja az egyezoseghez tartozo sorra mutato
+//pointert a listaban. Ha nem talalta meg a stringet, akkor NULL-t ad vissza.
+//list: A kereso lista.
+//str: A keresett string
+const MyStrUtils_findInListItem_t* MyStrUtils_findInList(
+                                const MyStrUtils_findInListItem_t* list,
+                                const char* str);
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 #endif //MY_STR_UTILS_H_

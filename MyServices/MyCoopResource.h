@@ -19,6 +19,8 @@
 #define MY_COOP_RESOURCE_EVENT__START_REQUEST   BIT(30)
 //Eroforras leallitasat kero esemeny flag
 #define MY_COOP_RESOURCE_EVENT__STOP_REQUEST    BIT(31)
+
+typedef struct coopResourceExtension coopResourceExtension_t;
 //------------------------------------------------------------------------------
 //Az eroforrast vezerlo valtozok halmaza
 typedef struct
@@ -63,6 +65,10 @@ typedef struct
     //kuld.
     //Az applikacio a loop-bol kilepve jelezheti, ha elindult az eroforras.
     bool run;
+
+    //Hiba lezaras vegen a folyamat evvel jelezheti, hogy vegzett.
+    bool errorClosed;
+
 } coopResource_control_t;
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
@@ -77,11 +83,17 @@ typedef status_t coopResourceStartFunc_t(void* callbackData,
                                          coopResource_control_t* control);
 //Az eroforras leallitasi kerelme utan a taszkban meghivodo rutin
 typedef status_t coopResourceStopFunc_t(void* callbackData);
-//Hiba eseten, a taszkbol hivott callback definicioja
-typedef void coopResourceErrorFunc_t(void* callbackData, status_t errorCode);
 //Eroforrast futtato callback definicioja
 typedef status_t coopResourceLoopFunc_t(void* callbackData,
                                           coopResource_control_t* control);
+//Hiba eseten, a taszkbol hivott callback definicioja
+typedef void coopResourceErrorFunc_t(void* callbackData, status_t errorCode);
+//Az eroforras hiba miatti leallitasi folyamat inditasa elott hivodo rutin
+typedef status_t coopResourceErrorLoopStartFunc_t(void* callbackData,
+                                            coopResource_control_t* control);
+//Eroforras hiba eseten a leallitasi folyamatot ebben futtathatja
+typedef status_t coopResourceErrorLoopFunc_t(void* callbackData,
+                                             coopResource_control_t* control);
 //------------------------------------------------------------------------------
 //Taszkal rendelkezo eroforras inicializalasanal hasznalt struktura.
 typedef struct
@@ -106,14 +118,21 @@ typedef struct
     coopResourceStartFunc_t* startFunc;
     //Az eroforras leallitasi kerelme utan a taszkban meghivodo rutin
     coopResourceStopFunc_t* stopFunc;
-    //Hiba eseten, a taszkbol hivott callback definicioja
-    coopResourceErrorFunc_t* errorFunc;
     //Eroforrast futtato callback definicioja
     coopResourceLoopFunc_t* loopFunc;
+    //Hiba eseten, a taszkbol hivott callback definicioja.
+    //Egyszer fut le, amikor a hiba beallt.
+    coopResourceErrorFunc_t* errorFunc;
+    //Hiba eseten az errorLoop hivasa elott hivodo callback. Ebebn az errorLoop
+    //inicializalhato
+    coopResourceErrorLoopStartFunc_t* errorLoopStartFunc;
+    //Hiba eseten az eroforras ebben a funkcioban futtathatja le a hiba
+    //lezarasat.
+    coopResourceErrorLoopFunc_t* errorLoopFunc;
 } coopResource_config_t;
 //------------------------------------------------------------------------------
 //Eroforras bovitmeny valtozoi.
-typedef struct
+struct coopResourceExtension
 {
     //letrehozaskor kapott konfiguracio
     const coopResource_config_t* cfg;
@@ -130,7 +149,7 @@ typedef struct
     uint32_t inputEvents_async;
 
     //Az eroforrast futtato csoportra mutat
-    struct coopResourceGroup_t* group;
+    coopResourceGroup_t* group;
 
     //Vezerlo valtozok, melyeken keresztul adjuk at a fuggevyneknek a
     //kapott esemeny flageket, de ezen keresztul modosithatjak a callbackek
@@ -155,7 +174,12 @@ typedef struct
 
     //Utolso hibakod
     status_t errorCode;
-} coopResourceExtension_t;
+
+    //Hiba eseten ha a manager felol leallito (torlo) uzenetet kap, akkor
+    //ezt a flaget beallitja. Ha futnanak a hibakezeles folyamatai, akkor
+    //annak a vegen ezen flag alapjan all vissza alaphelyzetbe az eroforras.
+    bool errorCleared;
+};
 //------------------------------------------------------------------------------
 //Taszkal tamogatott eroforras letrehozasa
 void MyCoopResource_create(resource_t* resource,

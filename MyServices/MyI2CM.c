@@ -127,7 +127,7 @@ void MyI2CM_createDevice(MyI2CM_Device_t* i2cDevice,
                          uint8_t slaveAddress,
                          void* handler)
 {
-    i2cDevice->i2cm=(struct MyI2CM_t*) i2cm;
+    i2cDevice->i2cm=i2cm;
     i2cDevice->slaveAddress=slaveAddress;
     i2cDevice->handler=handler;
 }

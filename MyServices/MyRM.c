@@ -25,7 +25,7 @@ static inline void MyRM_addDependencyToResource(resource_t* resource,
                                                 resourceDep_t* dep);
 static void MyRM_sendStatus(resource_t* resource,
                             resourceStatus_t resourceStatus);
-static void MyRM_dependencyStatusCB(struct resourceDep_t *dep,
+static void MyRM_dependencyStatusCB(resourceDep_t *dep,
                                     resourceStatus_t status,
                                     resourceErrorInfo_t* errorInfo);
 static inline void MyRM_sendNotify(MyRM_t* rm, uint32_t eventBits);
@@ -35,7 +35,7 @@ static void MyRM_stopDependency(resourceDep_t* dep);
 static void MyRM_resourceStatusCore(resource_t* resource,
                                     resourceStatus_t resourceStatus,
                                     status_t errorCode);
-static void MyRM_user_resourceStatusCB(struct resourceDep_t* dep,
+static void MyRM_user_resourceStatusCB(resourceDep_t* dep,
                                        resourceStatus_t status,
                                        resourceErrorInfo_t* errorInfo);
 static void MyRM_restartDo(resourceUser_t* user);
@@ -159,7 +159,7 @@ static void MyRM_printResourceInfo(resource_t* resource, bool printDeps)
                 printf("??? ");
             }
             //allapot kiirasa
-            printf("[%s] ",MyRM_resourceStateStrings[((resource_t*)dep->requiredResource)->state]);
+            printf("[%s] (%d)",MyRM_resourceStateStrings[((resource_t*)dep->requiredResource)->state], dep->flags.delayedStartRequest);
             //Kovetkezo elemre lepunk a listaban
             dep=(resourceDep_t*)dep->nextDependency;
         }
@@ -178,16 +178,17 @@ static void MyRM_printResourceInfo(resource_t* resource, bool printDeps)
                 requesterName=((resource_t*)requester->requesterResource)->resourceName;
                 if (requesterName==NULL) requesterName="???";
                 //Nev es allapot kiirasa
-                printf("%s[%s]",
+                printf("%s[%s] (%d)",
                        requesterName,
-                       MyRM_resourceStateStrings[((resource_t*)requester->requesterResource)->state]
+                       MyRM_resourceStateStrings[((resource_t*)requester->requesterResource)->state],
+                       requester->flags.delayedStartRequest
                        );
 
             } else
             {
                 requesterName=((resourceUser_t*)requester->requesterUser)->userName;
                 if (requesterName==NULL) requesterName="???";
-                printf("(U)%s[%s]",
+                printf("(U)%s[%s] (1)",
                        requesterName,
                        MyRM_resourceUserStateStrings[((resourceUser_t*)requester->requesterUser)->state]
                        );
@@ -275,7 +276,7 @@ static inline void MyRM_addRequesterToResource(resource_t* resource,
         dep->nextRequester=NULL;
     } else
     {   //Mar van a listanak eleme. Az utolso utan fuzzuk.
-        resource->requesterList.last->nextRequester=(struct resourceDep_t*)dep;
+        resource->requesterList.last->nextRequester=dep;
     }
     //A sort lezarjuk. Ez lesz az utolso.
     dep->nextRequester=NULL;
@@ -288,7 +289,7 @@ static inline void MyRM_addDependencyToResource(resource_t* resource,
 {
     //A leiroban beallitjuk az eroforrast, akihez tartozik, akinek a fuggoseget
     //leirjuk.
-    dep->requesterResource=(struct resource_t*) resource;                       //<-----------void?
+    dep->requesterResource=resource;                       //<-----------void?
 
     //Az eroforras lancolt listajahoz adjuk a fuggosegi leirot...
     if (resource->dependencyList.first==NULL)
@@ -297,7 +298,7 @@ static inline void MyRM_addDependencyToResource(resource_t* resource,
         //Dep->PrevDependency=NULL;
     } else
     {   //Mar van a listanak eleme. Az utolso utan fuzzuk.
-        resource->dependencyList.last->nextDependency=(struct resourceDep_t*)dep;
+        resource->dependencyList.last->nextDependency=dep;
     }
     //A sort lezarjuk. Ez lesz az utolso.
     dep->nextDependency=NULL;
@@ -323,8 +324,8 @@ void MyRM_addDependency(resourceDep_t* dep,
     MyRM_LOCK(rm->mutex);
 
     //Beallitjuk a leiroban a kerelmezo es a fuggoseget
-    dep->requesterResource=(struct resource_t*) highLevel;
-    dep->requiredResource =(struct resource_t*) lowLevel;
+    dep->requesterResource=highLevel;
+    dep->requiredResource =lowLevel;
     //jelezzuk, hogy egy eroforras az igenylo.
     dep->flags.requesterType=RESOURCE_REQUESTER_TYPE__RESOURCE;
     MyRM_addDependencyToResource(highLevel, dep);
@@ -348,7 +349,7 @@ static void MyRM_addResourceToManagedList(resource_t* resource)
         rm->resourceList.first=resource;
     } else
     {   //Van elotte elem
-        rm->resourceList.last->nextResource=(struct resource_t*) resource;
+        rm->resourceList.last->nextResource=resource;
     }
 
     //Ez lesz az utolso eleme a listanak.
@@ -423,10 +424,10 @@ static void MyRM_addResourceToProcessReqList(MyRM_t* rm, resource_t* resource)
         rm->processReqList.first=resource;
     } else
     {   //Mar van eleme a listanak. Hozzaadjuk a vegehez.
-        rm->processReqList.last->processReqList.next=(struct resource_t*)resource;
+        rm->processReqList.last->processReqList.next=resource;
     }
     //Az elozo lancszemnek a sorban korabbi legutolso elem lesz megadva
-    resource->processReqList.prev=(struct resource_t*) rm->processReqList.last;
+    resource->processReqList.prev=rm->processReqList.last;
     //Nincs tovabbi elem a listaban. Ez az utolso.
     resource->processReqList.next=NULL;
     //Megjegyezzuk, hogy ez az utolso elem a sorban
@@ -460,8 +461,8 @@ static void MyRM_deleteResourceFromProcessReqList(MyRM_t* rm, resource_t* resour
     {   //volt elotte a listaban
         if (next)
         {   //Volt utanna is. (Ez egy kozbulso listaelem)
-            next->processReqList.prev=(struct resource_t*) prev;
-            prev->processReqList.next=(struct resource_t*) next;
+            next->processReqList.prev=prev;
+            prev->processReqList.next=next;
         } else
         {   //Ez volt a legutolso elem a listaban
             //Az elozo elembol csinalunk legutolsot.
@@ -619,6 +620,15 @@ static inline void MyRM_checkStartStop(MyRM_t* rm, resource_t* resource)
 
                 if (resource->depCnt!=0)
                 {   //Az eroforrasnak meg van nem elindult fuggosege.
+
+                    if (resource->usageCnt==0)
+                    {   //Az eroforrasrol kozben az inditasi folyamata alatt
+                        //mindenki lemondott.
+                        //Nem varunk tovabb, annak minden fuggosegere, hogy
+                        //elinduljanak, hanem azonnal leallunk.                        
+                        goto abort_starting;
+                    }
+
                     //Tovabb varakozunk, hogy az osszes fuggosege elinduljon...
                     break;
                 }
@@ -711,8 +721,17 @@ static inline void MyRM_checkStartStop(MyRM_t* rm, resource_t* resource)
                     //inditani annak leallitasat.
                     resource->flags.checkStartStopReq=true;
                 } else
-                {   //Az eroforras meg nincs elinditva. Varakozunk tovabb...
+                {   //Az eroforras meg nem indult el. Futnak benne az inditasi
+                    //folyamatok. Varakozunk tovabb...
 
+                    //Jott kozben leallitasi igeny?
+                    if (resource->usageCnt==0)
+                    {   //Egy elinditott, de az indulasi folyamatait meg nem
+                        //befejezo eroforrast akarnak leallitani.
+                        //Ebben az esetben jelezni kell, hogy megaszkitjak az
+                        //indulasi folyamatot.
+                        goto abort_active_starting;
+                    }
                 }
             } //(resource->started==false) else
 
@@ -753,6 +772,11 @@ static inline void MyRM_checkStartStop(MyRM_t* rm, resource_t* resource)
                     //varunk tovabb....
                     break;
                 }
+
+abort_starting: //Egyszrusites! Goto-val ide ugrik, ha inditasi allapot alatt
+                //megis minden hasznaloja lemond az eorforrasrol, es nem szabad
+                //megvarni annak a teljes indulasat, hanem azonnal le kell allni.
+
                 resource->flags.halted=false;
 
                 //Az eroforras leallt, es mar senki sem hasznalja.
@@ -839,7 +863,7 @@ static inline void MyRM_checkStartStop(MyRM_t* rm, resource_t* resource)
 
             if (resource->usageCnt==0)
             {   //Nincs hasznaloja. Nincs mit tenni. Varunk ujabb hasznalati
-                //igenybe...
+                //igenybevetelt...
 
             } else
             {   //Van hasznalati kerelem.
@@ -863,7 +887,7 @@ static inline void MyRM_checkStartStop(MyRM_t* rm, resource_t* resource)
                 {
                     MyRM_startDependency(dep);
 
-                    //lancolt list akovetkezo elemere allas.
+                    //lancolt lista kovetkezo elemere allas.
                     dep=(resourceDep_t*)dep->nextDependency;
                 }
 
@@ -885,12 +909,19 @@ static inline void MyRM_checkStartStop(MyRM_t* rm, resource_t* resource)
             } else
             {   //Az eroforras eddig mukodott, de most mar nincsnek hasznaloi.
                 //Az eroforrast le kell allitani.
+
+
+abort_active_starting:
+                //Ide ugruik, ha egy eroforras el lett inditva, de meg benne
+                //az inditasi folyamatok futnak. Goto-val ugrunk ide, a kod
+                //egyszerusites erdekeben.
                 resource->state=RESOURCE_STATE_STOPPING;
 
-stop_resource:
+stop_resource:                
                 ///eroforras leallitasa...
                 //Itt a kod egszerusitese miatt, goto-val ide ugrik, ha hiba
                 //miatt is le kell allitani az eroforrast...
+
 
                 if (resource->flags.running)                                      //?????????????????????
                 {   //Az eroforras fut. Korabban ezt mar jelezte a kerelmezoi
@@ -1000,7 +1031,7 @@ stop_resource:
                     // fuggveny hivodik meg.
                     //-User eseten pedig a MyRM_user_resourceStatusCB()
                     // hivodik meg.)
-                    dep->depStatusFunc((struct resourceDep_t*)dep,
+                    dep->depStatusFunc(dep,
                                        resourceStatus,
                                        resource->reportedError);
                 }
@@ -1047,7 +1078,7 @@ static void MyRM_sendStatus(resource_t* resource,
             // fuggveny hivodik meg.
             // User eseten pedig a MyRM_user_resourceStatusCB() hivodik meg.)
 
-            dep->depStatusFunc((struct resourceDep_t*)dep,
+            dep->depStatusFunc(dep,
                                resourceStatus,
                                resource->reportedError);
         }
@@ -1166,6 +1197,7 @@ static inline void MyRM_dependenyStop(MyRM_t* rm, resource_t* resource)
     //A fuggosegek szamanak novelese
     if (resource->depCnt>=resource->depCount)
     {   //A fuggoseg szamlalo elkeveredett.
+        printf("DEP CNT ERROR! Resource: %s\n", resource->resourceName);
         ASSERT(0);
         while(1);
     }
@@ -1176,7 +1208,7 @@ static inline void MyRM_dependenyStop(MyRM_t* rm, resource_t* resource)
 //Az egyes fuggosegek ezen keresztul jeleznek az oket igenylo magasabb szinten
 //levo eroforrasok fele. Vagy forditva, egy eroforras fuggosege ezen keresztul
 //jelzi az allapotat.
-static void MyRM_dependencyStatusCB(struct resourceDep_t* dep,
+static void MyRM_dependencyStatusCB(resourceDep_t* dep,
                                     resourceStatus_t status,
                                     resourceErrorInfo_t* errorInfo)
 {
@@ -1265,11 +1297,12 @@ static void MyRM_startDependency(resourceDep_t* dep)
             requesterName=((resourceUser_t*)dep->requesterUser)->userName;
         }
         if (requesterName==NULL) requesterName="???";
-        printf("MyRM_startDependency()  %s%s ----> %s\n",
+        printf("MyRM_startDependency()  %s%s ----> %s  [%s]\n",
                (dep->flags.requesterType==RESOURCE_REQUESTER_TYPE__USER) ? "(U)"
                                                                          : "",
                requesterName,
-               dependency->resourceName);
+               dependency->resourceName,
+               MyRM_resourceStateStrings[dependency->state]);
     #endif
 
 
@@ -1279,6 +1312,12 @@ static void MyRM_startDependency(resourceDep_t* dep)
         //lehet ervenyre juttatni, miutan az igenyelt eroforras leallt.
         //A kerelmet eltaroljuk.
         dep->flags.delayedStartRequest=true;
+
+        #if MyRM_TRACE
+            printf("delayedStartRequest setted  %s --> %s\n",
+                   requesterName,
+                   dependency->resourceName);
+        #endif
 
         //Az inditando eroforras a leallasa utan vegignezi majd az igenyloi
         //dependencia leiroit, es ha talal bennuk kesleltetett kerest, akkor
@@ -1338,13 +1377,17 @@ static void MyRM_stopDependency(resourceDep_t* dep)
             requesterName=((resourceUser_t*)dep->requesterUser)->userName;
         }
         if (requesterName==NULL) requesterName="???";
-        printf("MyRM_stopDependency()  %s%s ----> %s\n",
+        printf("MyRM_stopDependency()  %s%s ----> %s  [%s]\n",
                (dep->flags.requesterType==RESOURCE_REQUESTER_TYPE__USER) ? "(U)" : "",
                requesterName,
-               dependency->resourceName);
+               dependency->resourceName,
+               MyRM_resourceStateStrings[dependency->state]);
     #endif
-
-    //Az eroforrast hasznalok szamanak cskkenetese
+if (dependency->usageCnt==0)
+{
+    printf("\n\n______________ASSERT! %s\n\n", dependency->resourceName);
+}
+    //Az eroforrast hasznalok szamanak csokkenetese
     if (dependency->usageCnt==0)
     {   //Az eroforras kezelesben hiba van. Nem mondhatnanak le tobben,
         //mint amennyien korabban igenybe vettek!
@@ -1358,7 +1401,17 @@ static void MyRM_stopDependency(resourceDep_t* dep)
             dependency->flags.statusRequest=true;
             dep->flags.statusRequest=true;            
             goto skip;
-        }        
+        }
+/*
+        if (dependency->state==RESOURCE_STATE_STOPPING)
+        {   //Az eroforras mar all le.
+            dependency->flags.statusRequest=true;
+            dep->flags.statusRequest=true;
+            goto skip;
+        }
+*/
+        //??????????????????
+        //if (dep->flags.delayedStartRequest) goto skip;
 
         ASSERT(0);
         return;
@@ -1406,7 +1459,7 @@ static void MyRM_resourceStatusCore(resource_t* resource,
            (int)errorCode);
     #endif
 
-    //Ha az erorCode hibat jelez, akkor hibara visszuk az eroforrast
+    //Ha az erroCode hibat jelez, akkor hibara visszuk az eroforrast
     if (errorCode) resourceStatus=RESOURCE_ERROR;
 
     switch(resourceStatus)
@@ -1512,7 +1565,7 @@ static void MyRM_resourceStatusCore(resource_t* resource,
             //eroforrast hasznalo masik eroforrasok, vagy userek fele
             //tovabb adhatunk...
             //Reportoljuk, hogy melyik eroforrassal van a hiba
-            resource->errorInfo.resource=(struct resource_t*)resource;
+            resource->errorInfo.resource=resource;
             //informaljuk, hogy mi a hibakod
             resource->errorInfo.errorCode=errorCode;
             //az aktualis modul allapotot is reportoljuk
@@ -1553,7 +1606,7 @@ void MyRM_addResourceStatusRequest(resource_t* resource,
 
     if (resource->firstStatusRequester==NULL)
     {   //ez lesz az elso beregisztralt kerelmezo
-        resource->firstStatusRequester=(struct resourceStatusRequest_t*)request;
+        resource->firstStatusRequester=request;
     } else
     {
         //Lista vegenek keresese. Addig lepked, mig a listat lezaro NULL-ra nem
@@ -1564,7 +1617,7 @@ void MyRM_addResourceStatusRequest(resource_t* resource,
         {
             item = (resourceStatusRequest_t*)item->next;
         }
-        item->next=(struct resourceStatusRequest_t*)request;
+        item->next=request;
     }
     request->next=NULL;
 
@@ -1585,11 +1638,11 @@ void MyRM_createUser(resourceUser_t* user, const resourceUser_config_t* cfg)
     MyRM_LOCK(rm->mutex);
 
     //dependencia leiro letrehozasa az elerni kivant eroforrashoz....
-    user->dependency.requesterResource=(struct resource_t*) NULL;
-    user->dependency.requiredResource =(struct resource_t*) cfg->resource;
+    user->dependency.requesterResource= NULL;
+    user->dependency.requiredResource = cfg->resource;
     //Jelezzuk a dependenciaban, hogy egy user a birtokosa.
     user->dependency.flags.requesterType=RESOURCE_REQUESTER_TYPE__USER;
-    user->dependency.requesterUser=(struct resourceUser_t*)user;
+    user->dependency.requesterUser=user;
     //Beallitja az eroforras altal hivando statusz fuggvenyt, melyen keresztul
     //az eroforras jelezheti az user szamara az allapotvaltozasait
     user->dependency.depStatusFunc=MyRM_user_resourceStatusCB;
@@ -1660,9 +1713,23 @@ void MyRM_useResource(resourceUser_t* user)
             break;
 
         case RESOURCEUSERSTATE_WAITING_FOR_START:
+        break;
         case RESOURCEUSERSTATE_RUN:
             //Mar egy korabbi inditasra varunk, vagy mar mukodik az eroforras.
             //Nem inditunk ra ujra.
+
+            //Statusz kuldese azoknak a folyamatoknak, melyek varjak az indulast
+            if (user->statusFunc)
+            {
+                resource_t* resource=
+                            ((resource_t*)user->dependency.requiredResource);
+
+                user->statusFunc(resource,
+                                 RESOURCE_RUN,
+                                 resource->reportedError,
+                                 user->callbackData);
+            }
+
             break;
 
 
@@ -1798,19 +1865,22 @@ void MyRM_restartResource(resourceUser_t* user)
             //vagy az eroforras hibaja miatt az user hiba allapotban van.
             //Ebbol kilepni, az eroforras leallitasaval lehet.
 
-            user->restartRequestFlag=true;
+            if (user->restartRequestFlag==false)
+            {   //Meg nincs ujrainditasi kerelem az eroforrasra.
+                user->restartRequestFlag=true;
 
-            //Beallitjuk, hogy varunk annak leallasara
-            user->state=RESOURCEUSERSTATE_WAITING_FOR_STOP_OR_DONE;
+                //Beallitjuk, hogy varunk annak leallasara
+                user->state=RESOURCEUSERSTATE_WAITING_FOR_STOP_OR_DONE;
 
-            //Eroforrast leallitjuk (legalabb is bejelezzuk, hogy egy user
-            //lemond rola, igy ha annak usageCnt szamlaloja 0-ra csokken, akkor
-            //az eroforras le fog allni, majd ha mindenki lemondott rola, akkor
-            //az ujrainditasi keres miatt az ujra fog indulni.)
-            MyRM_stopDependency(&user->dependency);
+                //Eroforrast leallitjuk (legalabb is bejelezzuk, hogy egy user
+                //lemond rola, igy ha annak usageCnt szamlaloja 0-ra csokken, akkor
+                //az eroforras le fog allni, majd ha mindenki lemondott rola, akkor
+                //az ujrainditasi keres miatt az ujra fog indulni.)
+                MyRM_stopDependency(&user->dependency);
 
-            //Jelzes a taszknak...
-            MyRM_sendNotify(rm, MyRM_NOTIFY__RESOURCE_UNUSE);
+                //Jelzes a taszknak...
+                MyRM_sendNotify(rm, MyRM_NOTIFY__RESOURCE_UNUSE);
+            }
             break;
 
         case RESOURCEUSERSTATE_WAITING_FOR_STOP_OR_DONE:
@@ -1849,7 +1919,7 @@ void MyRM_restartResource(resourceUser_t* user)
 //------------------------------------------------------------------------------
 //Az userekhez tartozo callback, melyet az altaluk hasznalt eroforras hiv az
 //allapotvaltozasuk szerint...
-static void MyRM_user_resourceStatusCB(struct resourceDep_t* dep,
+static void MyRM_user_resourceStatusCB(resourceDep_t* dep,
                                        resourceStatus_t status,
                                        resourceErrorInfo_t* errorInfo)
 {

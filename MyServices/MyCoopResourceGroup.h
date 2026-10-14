@@ -9,6 +9,7 @@
 #include "MyRM.h"
 #include "MySwTimer.h"
 
+typedef struct coopResourceGroup coopResourceGroup_t;
 //------------------------------------------------------------------------------
 //Cooperative eroforrasok csoportjat futtato modul konfiguracios parameterei
 typedef struct
@@ -26,7 +27,7 @@ typedef struct
 }coopResourceGroupConfig_t;
 //------------------------------------------------------------------------------
 //MyCoopResourceGroup valtozoi
-typedef struct
+struct coopResourceGroup
 {
     //A futtato taszkl handlere
     TaskHandle_t    taskHandle;
@@ -49,8 +50,7 @@ typedef struct
 
     //Eroforrasok kozos idozito managgere
     MySwTimerManager_t  timerManager;
-
-} coopResourceGroup_t;
+};
 //------------------------------------------------------------------------------
 //Eroforrasok csoportjat futtato modul letrehozasa es inicializalasa
 void MyCoopResourceGroup_create(coopResourceGroup_t* group,

@@ -50,8 +50,7 @@ status_t MyConsole_init(MyConsole_t* console, const MyConsole_Config_t* cfg)
     //callback funkcion keresztul
     if (console->peripheriaInitFunc)
     {
-        status=console->peripheriaInitFunc((struct MyConsole_t*) console,
-                                             console->callbackData);
+        status=console->peripheriaInitFunc(console, console->callbackData);
         if (status) goto error;
     }
 

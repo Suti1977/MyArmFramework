@@ -167,6 +167,9 @@ status_t MySimpleResourceUser_unuse(simpleResourceUser_t* user)
     printf("MySimpleResourceUser_unuse() (%s)\n", user->user.userName);
     #endif
 
+    //A korabbrol bent maradt hibakod torlese
+    user->asyncStatus=kStatus_Success;
+
     //Eroforras hasznalatanak lemondasa. A hivas utan a callbackben kapunk
     //jelzest az eroforras allapotarol.
     MyRM_unuseResource(&user->user);

@@ -11,6 +11,11 @@
 //Ha hasznaljuk a modult, akkor annak valtozoira peldanyt kell kesziteni.
 //Az alabbi makrot el kell helyezni valahol a forrasban, peldaul main.c-ben
 #define MyRM_INSTANCE  MyRM_t myRM;
+
+typedef struct _resource_t resource_t;
+typedef struct _resourceDep_t resourceDep_t;
+typedef struct _resourceUser_t resourceUser_t;
+typedef struct _resourceStatusRequest_t resourceStatusRequest_t;
 //------------------------------------------------------------------------------
 //Minden eroforras sikeres leallitasa utan hihato callback fuggveny definialasa
 typedef void MyRM_allResourceStoppedFunc_t(void* callbackData);
@@ -84,7 +89,7 @@ typedef enum
 typedef struct
 {
     //A hibas fuggosegre mutat
-    struct resource_t* resource;
+    resource_t* resource;
     //a hiba kodja
     status_t errorCode;
     //A hibat jelento eroforras ebben az allapotaban generalta a hibat
@@ -101,8 +106,7 @@ typedef status_t resourceStartFunc_t(void* param);
 typedef status_t resourceStopFunc_t(void* param);
 
 //Eroforrasok/userek fele adott statusz callback tipus definicioja
-struct resourceDep_t;
-typedef void resourceDependencyStatusFunc_t(struct resourceDep_t* dep,
+typedef void resourceDependencyStatusFunc_t(resourceDep_t* dep,
                                             resourceStatus_t status,
                                             resourceErrorInfo_t* errorInfo);
 //------------------------------------------------------------------------------
@@ -132,7 +136,7 @@ typedef enum
 //A struktura 2 lancolt listaba is elemkent szerepel.
 // - A tulajdonos listaja
 // - Az alapfeltetelnek megadott (igenyelt) eroforrashoz tartozo listaban
-typedef struct
+struct _resourceDep_t
 {
     struct
     {
@@ -154,39 +158,39 @@ typedef struct
     } flags;
 
     //A leiro altal igenyelt eroforrasra mutat.
-    struct resource_t*     requiredResource;
+    resource_t*     requiredResource;
     //Az eroforrashoz tartozo fuggosegi lancolt lista kezelesehez szukseges.
     //Ezen halad vegig az igenyelt eroforras, es jelez vissza a kerelmezoknek az
     //aktualis statuszarol.   
-    struct resourceDep_t*  nextRequester;
+    resourceDep_t*  nextRequester;
 
     //A leirot birtoklo eroforrasra/userre mutato pointerek. A requesterType
     //donti el.
     union
     {
-        struct resource_t*     requesterResource;
-        struct resourceUser_t* requesterUser;
-        void*                  requester;
+        resource_t*     requesterResource;
+        resourceUser_t* requesterUser;
+        void*           requester;
     };
 
     //A kerelmezo eroforras fuggosegi listaja
-    struct resourceDep_t*  nextDependency;
+    resourceDep_t*  nextDependency;
 
     //fuggoseg altal hasznalt statsusz callback. A fuggoseg az egyes allapot
     //valtozasiairol ezen keresztul tajekoztatja az ot hasznalo eroforrast vagy
     //usert.
     resourceDependencyStatusFunc_t* depStatusFunc;
 
-} resourceDep_t;
+};
 //------------------------------------------------------------------------------
 //Az egyes eroforrasok manageleshez tartozo valtozok halmaza.
 //Minden, a rendszerben implementalt, es managelt eroforras rendelkezik egy
 //ilyen leiroval.
-typedef struct
+struct _resource_t
 {
     //Az eroforras managerben az eroforrasok lancolt listajahoz szukseges
     //mutato. Segitsegevel lehet kilistazni a letrehozott eroforrasokat.
-    struct resource_t* nextResource;
+    resource_t* nextResource;
 
     //Eroforras aktualis allapota.
     resourceState_t    state;
@@ -234,8 +238,8 @@ typedef struct
     //vannak adva a listahoz.
     struct
     {
-        struct resource_t* next;
-        struct resource_t* prev;
+        resource_t* next;
+        resource_t* prev;
         bool inTheList;
     } processReqList;
 
@@ -321,12 +325,12 @@ typedef struct
     //A listaba regisztralt callbackek kerulnek vegighivasra, ha az eroforras
     //allapota valtozott. Egy eroforrashoz igy tobb statusz kerelmezo is
     //regisztralhat.
-    struct resourceStatusRequest_t* firstStatusRequester;
+    resourceStatusRequest_t* firstStatusRequester;
 
     //Tetszoleges eroforras kiegeszitesre mutat. Ilyen lehet peldaul, ha egy
     //eroforrashoz letrehoztak taszkot.
     void* ext;
-} resource_t;
+};
 //------------------------------------------------------------------------------
 //Az applikacio fele callback definicio.
 //Ezen keresztul jelez vissza, ha a hasznalt eroforrasban valami allapot
@@ -337,15 +341,15 @@ typedef void resourceStatusFunc_t( resource_t* resource,
                                    void* callbackData);
 
 //Az egyes eroforrasokhoz tartozo, eroforras statuszt kerelmezok listaja.
-typedef struct
+struct _resourceStatusRequest_t
 {
     //A hivott callback funkcio
     resourceStatusFunc_t* statusFunc;
     //tetszoleges adattartalom
     void* callbackData;
     //Lancolt lista kovetkezo elemere mutat
-    struct resourceStatusRequest_t* next;
-} resourceStatusRequest_t;
+    resourceStatusRequest_t* next;
+};
 //------------------------------------------------------------------------------
 //Eroforrasokat hasznalo userek (igenylok) allapotai.
 typedef enum
@@ -378,7 +382,7 @@ typedef enum
 //------------------------------------------------------------------------------
 //Az eroforrast hasznalo (birtoklo) folyamatokhoz tartozik egy-egy ilyen leiro.
 //Ezen keresztul tortenik az egyes eroforrasok kerelme az applikacio felol.
-typedef struct
+struct _resourceUser_t
 {
     //A hasznalni kivant eroforras eleresehez dependencia leiro.
     resourceDep_t dependency;
@@ -399,7 +403,7 @@ typedef struct
     //Az ujrainditasi kerelmet jelzo flag.
     bool                    restartRequestFlag;
 
-} resourceUser_t;
+};
 //------------------------------------------------------------------------------
 //MyRM valtozoi
 typedef struct

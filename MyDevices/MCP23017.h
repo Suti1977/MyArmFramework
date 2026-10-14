@@ -69,7 +69,7 @@ status_t MCP23017_writePort16(MCP23017_t* dev, uint16_t data);
 status_t MCP23017_readPort8(MCP23017_t* dev, uint8_t portID, uint8_t* data);
 
 //16 bitesen portok olvasasa (A es B portok egyutt)
-status_t MCP23017_readPort16(MCP23017_t* dev, uint8_t portID, uint16_t* data);
+status_t MCP23017_readPort16(MCP23017_t* dev, uint16_t* data);
 
 //8 bites port adatiranyok beallitsa
 status_t MCP23017_setDir8(MCP23017_t* dev, uint8_t portID, uint8_t directions);
