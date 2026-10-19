@@ -986,7 +986,7 @@ status_t BQ25622_getTS(BQ25622_t* dev, float* value)
     if (status) return status;
 
     raw &= 0x0fff;
-    *value = raw * 0.0961f;
+    *value = raw * 0.000961;
     return kStatus_Success;
 }
 //------------------------------------------------------------------------------
