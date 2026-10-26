@@ -92,7 +92,7 @@ static void MyRM_printResourceInfo(resource_t* resource, bool printDeps)
     printf("%-12s", resource->resourceName ? resource->resourceName : "???");
 
     //Eroforras allapotanak kiirasa
-    if (resource->state>ARRAY_SIZE(MyRM_resourceStateStrings))
+    if (resource->state>=ARRAY_SIZE(MyRM_resourceStateStrings))
     {   //illegalis allapot. Ez csak valami sw hiba miatt lehet
         printf("  [???]");
     } else
@@ -1447,7 +1447,7 @@ static void MyRM_resourceStatusCore(resource_t* resource,
 {
 
     #if MyRM_TRACE
-    if (resourceStatus>ARRAY_SIZE(MyRM_resourceStatusStrings))
+    if (resourceStatus>=ARRAY_SIZE(MyRM_resourceStatusStrings))
     {   //Olyan statusz kodot kapott, ami nincs definialva!
         ASSERT(0);
         return;
@@ -2077,6 +2077,7 @@ void MyRM_startResource(resource_t* resource)
     {   //Az eroforras leallasi folyamatban van. Ezt a kerest csak az utan
         //lehet ervenyre juttatni, miutan az igenyelt eroforras leallt.
         //A kerelmet elutasitjuk.
+        MyRM_UNLOCK(rm->mutex);
         return;
     } else
     {   //Az eroforrast igenybe vesszuk...
@@ -2111,6 +2112,7 @@ void MyRM_stopResource(resource_t* resource)
     if (resource->usageCnt==0)
     {   //Az eroforras kezelesben hiba van. Nem mondhatnanak le tobben,
         //mint amennyien korabban igenybe vettek!
+        MyRM_UNLOCK(rm->mutex);
         return;
     }
     resource->usageCnt--;
