@@ -161,7 +161,7 @@ struct _resourceDep_t
     resource_t*     requiredResource;
     //Az eroforrashoz tartozo fuggosegi lancolt lista kezelesehez szukseges.
     //Ezen halad vegig az igenyelt eroforras, es jelez vissza a kerelmezoknek az
-    //aktualis statuszarol.   
+    //aktualis statuszarol.
     resourceDep_t*  nextRequester;
 
     //A leirot birtoklo eroforrasra/userre mutato pointerek. A requesterType
@@ -275,8 +275,12 @@ struct _resource_t
     //Ez akkor erdekes, ha egy eroforras STARTING allapotban van, de meg var
     //valamelyik fuggosegere, igy annak addig nem hivodik meg a start()
     //fuggvenye. A flag segitsegevel tudhato, hogy az eroforras belso mecha-
-    //nizmusai meg nem allnak keszen a hibakezeles fogadasara.    
+    //nizmusai meg nem allnak keszen a hibakezeles fogadasara.
     uint16_t started :1;
+
+    //true, ha az adott leallitasi folyamatban a stop callback mar meghivasra
+    //kerult. Megakadalyozza, hogy hiba eseten tobbszor hivjuk meg.
+    uint16_t stopCalled :1;
 
     //true, ha az eroforras fut, es kiadta az igenyloi fele a jelzest, hogy
     //elindult. Csak akkor hivhatjuk meg a kerelmezoinek a dependencyStop()
