@@ -31,6 +31,12 @@ void MyInputs_initManager(MyInputs_manager_t* manager,
     manager->mutex=xSemaphoreCreateMutexStatic(&manager->mutexBuffer);
     ASSERT(manager->mutex);
 
+    manager->pollTime=config->pollTime;
+
+    //Bemenetek kezeleset tamogato manager inicializalasa
+    MySwTimer_initManager(&manager->timerManager);
+    //Pollozast uzemezo idozito letrehozasa
+    MySwTimer_addTimer(&manager->timerManager, &manager->pollTimer);
 
     //bemenetek mintavetelezeset, allapotok idoziteset megvalosito taszk
     //letrehozasa.
@@ -43,12 +49,6 @@ void MyInputs_initManager(MyInputs_manager_t* manager,
                                            &manager->taskBuffer);
     ASSERT(manager->taskHandler);
 
-    manager->pollTime=config->pollTime;
-
-    //Bemenetek kezeleset tamogato manager inicializalasa
-    MySwTimer_initManager(&manager->timerManager);
-    //Pollozast uzemezo idozito letrehozasa
-    MySwTimer_addTimer(&manager->timerManager, &manager->pollTimer);
 
 }
 //------------------------------------------------------------------------------
